@@ -47,6 +47,7 @@ pub fn routes() -> Router<AppState> {
         .route("/api/v1/shortcuts/{id}/analytics", get(analytics::shortcut_analytics))
         // Tags
         .route("/api/v1/tags", get(tags::list))
+        .route("/api/v1/tags/{name}/shortcuts", get(tags::shortcuts_by_tag))
         // Users (admin only)
         .route("/api/v1/users", get(users::list))
         .route("/api/v1/users/{id}", put(users::update))

@@ -8,7 +8,7 @@ Protected endpoints require `Authorization: Bearer <token>` header.
 
 ### POST /api/v1/auth/register
 
-Register a new user. First user automatically becomes admin.
+Register a new user. First user automatically becomes admin. Only works when `ALLOW_REGISTRATION=true`.
 
 **Request:**
 ```json
@@ -34,6 +34,10 @@ Register a new user. First user automatically becomes admin.
 }
 ```
 
+**Errors:**
+- `403` — Registration disabled
+- `409` — Email already exists
+
 ---
 
 ### POST /api/v1/auth/login
@@ -55,6 +59,9 @@ Login with email/password.
   "user": { ... }
 }
 ```
+
+**Errors:**
+- `401` — Invalid credentials
 
 ---
 
@@ -84,6 +91,8 @@ Check if public registration is enabled.
 ### GET /api/v1/shortcuts
 
 List shortcuts with pagination and filters.
+
+**Headers:** `Authorization: Bearer <token>`
 
 **Query Parameters:**
 | Param | Type | Default | Description |
@@ -148,6 +157,9 @@ Create a new shortcut.
 
 **Response (200):** Created shortcut object with tags.
 
+**Errors:**
+- `409` — Shortcut name already exists
+
 ---
 
 ### GET /api/v1/shortcuts/:id
@@ -182,15 +194,17 @@ Delete a shortcut. Only owner or admin can delete.
 
 ### GET /api/v1/shortcuts/by-name/:name
 
-Get shortcut by name (public).
+Get shortcut by name (public, no auth required).
 
-**Response (200):** Shortcut object.
+**Response (200):** Shortcut object with tags.
 
 ---
 
 ### GET /api/v1/shortcuts/:id/analytics
 
 Get analytics for a shortcut.
+
+**Headers:** `Authorization: Bearer <token>`
 
 **Response (200):**
 ```json
@@ -232,11 +246,39 @@ List all unique tags.
 
 ---
 
+### GET /api/v1/tags/:name/shortcuts
+
+Get all shortcuts with a specific tag. Returns full shortcut objects.
+
+**Response (200):**
+```json
+[
+  {
+    "id": 1,
+    "creator_id": 1,
+    "name": "google",
+    "link": "https://google.com",
+    "title": "Google",
+    "description": "Search engine",
+    "visibility": "public",
+    "view_count": 42,
+    "tags": ["search", "web"],
+    "og_title": "",
+    "og_description": "",
+    "og_image": "",
+    "created_ts": 1691654400,
+    "updated_ts": 1691654400
+  }
+]
+```
+
+---
+
 ## Workspace Settings
 
 ### GET /api/v1/settings
 
-Get workspace settings (public).
+Get workspace settings (public, no auth required).
 
 **Response (200):**
 ```json
@@ -261,7 +303,7 @@ Update workspace settings (admin only).
 }
 ```
 
-**Response (200):** Updated settings.
+**Response (200):** Updated settings object.
 
 ---
 
@@ -271,7 +313,9 @@ Upload logo file (admin only).
 
 **Headers:** `Authorization: Bearer <token>`, `Content-Type: multipart/form-data`
 
-**Body:** Form data with `file` field (PNG, JPG, GIF, SVG, WebP, max 2MB)
+**Body:** Form data with `file` field
+
+**Allowed formats:** PNG, JPG, GIF, SVG, WebP (max 2MB)
 
 **Response (200):**
 ```json
@@ -290,7 +334,7 @@ List all users (admin only).
 
 **Headers:** `Authorization: Bearer <token>`
 
-**Response (200):** Array of user objects.
+**Response (200):** Array of user objects (without password_hash).
 
 ---
 
@@ -322,6 +366,12 @@ Redirect to shortcut's target URL. Increments view count and records analytics (
 
 ---
 
+### GET /uploads/:filename
+
+Access uploaded files (logos, etc.).
+
+---
+
 ### GET /healthz
 
 Health check.
@@ -342,7 +392,7 @@ Health check.
 |--------|-------------|
 | 400 | Bad request (invalid input) |
 | 401 | Unauthorized (missing/invalid token) |
-| 403 | Forbidden (not owner/admin) |
+| 403 | Forbidden (not owner/admin or registration disabled) |
 | 404 | Not found |
 | 409 | Conflict (duplicate name/email) |
 | 413 | Payload too large (file > 2MB) |
