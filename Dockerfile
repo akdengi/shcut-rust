@@ -24,7 +24,7 @@ FROM node:24-alpine AS frontend-builder
 WORKDIR /app
 
 COPY shcut-frontend-nuxt/package*.json ./
-RUN npm ci
+RUN npm install
 
 COPY shcut-frontend-nuxt/ ./
 RUN npx nuxt generate
