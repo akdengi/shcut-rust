@@ -1,108 +1,126 @@
-# ShCut
+# ShCut Rust
 
-Self-hosted URL shortener written in Rust.
+Self-hosted URL shortener built with Rust and Nuxt 3.
 
 ## Features
 
-- **Short URLs**: Create customizable, human-readable shortcuts
-- **Tags**: Organize shortcuts with tags
-- **Collections**: Group shortcuts into collections
-- **Analytics**: Track views, referrers, devices, browsers, countries, and UTM parameters
-- **Auth**: JWT-based authentication with admin/user roles
-- **No Limits**: Unlimited shortcuts, collections, and users
+- **Short URLs** — create custom short links with `/name` redirects
+- **Tags** — organize shortcuts with tags, filter by tag
+- **Analytics** — track views, devices, browsers, referrers
+- **Workspace settings** — custom company name and logo upload
+- **JWT auth** — secure authentication with admin/user roles
+- **Admin seeding** — create admin user from environment variables
+- **Dark mode** — automatic theme switching
 
 ## Tech Stack
 
-- **Backend**: Rust + Axum + SQLx + SQLite
-- **Frontend**: Nuxt 3 + Vue 3 + Tailwind CSS
+- **Backend**: Rust, Axum, SQLx, SQLite
+- **Frontend**: Nuxt 3, Vue 3, Pinia, Tailwind CSS
+- **Auth**: JWT + Argon2id password hashing
 
-## Prerequisites
-
-- Docker + Docker Compose
-- Node.js 24+ and npm 12+ (for local development)
-- Rust 1.97+ (for local development)
-
-### Installing Node.js and npm (Ubuntu/Debian)
+## Quick Start
 
 ```bash
-# Install Node.js 24 LTS (includes npm 12)
-curl -fsSL https://deb.nodesource.com/setup_24.x | sudo -E bash -
-sudo apt-get install -y nodejs
+git clone https://github.com/akdengi/shcut-rust.git
+cd shcut-rust
 
-# Verify installation
-node -v   # v24.x.x
-npm -v    # 12.x.x
+# Copy and edit .env
+cp .env.example .env
+# Edit .env: set JWT_SECRET, ADMIN_EMAIL, ADMIN_PASSWORD
+
+# Deploy
+chmod +x deploy.sh
+./deploy.sh
 ```
 
-### Installing Node.js and npm (via nvm)
-
-```bash
-# Install nvm
-curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
-source ~/.bashrc
-
-# Install Node.js
-nvm install 24
-nvm use 24
-```
-
-## Quick Start (Docker)
-
-```bash
-git clone <repo-url> && cd shcut-rust
-
-# Create .env file
-echo "JWT_SECRET=your-secret-key-change-in-production" > .env
-
-# Build and run
-docker compose up -d --build
-
-# Verify
-curl http://localhost:5231/healthz
-```
-
-## Local Development
-
-### Backend (Rust)
-
-```bash
-# Install Rust (if not installed)
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-
-# Install dependencies and run
-cargo install sqlx-cli --no-default-features --features sqlite
-sqlx migrate run
-cargo run
-```
-
-### Frontend (Nuxt)
-
-```bash
-# Install dependencies
-cd shcut-frontend-nuxt
-npm install
-
-# Run in dev mode
-npm run dev
-```
+Access at `http://your-server:5231`
 
 ## Environment Variables
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `HOST` | Server address | `0.0.0.0` |
-| `PORT` | Server port | `5231` |
-| `DATABASE_URL` | SQLite database path | `/app/data/shcut.db` |
-| `JWT_SECRET` | JWT signing secret | - |
-| `RUST_LOG` | Log level | `shcut_rust=info` |
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `HOST` | `0.0.0.0` | Server bind address |
+| `PORT` | `5231` | Server port |
+| `DATABASE_URL` | `/app/data/shcut.db` | SQLite database path |
+| `JWT_SECRET` | — | **Required.** Secret for JWT signing. Generate with `openssl rand -hex 32` |
+| `ADMIN_EMAIL` | — | Admin email (seeds admin on first start) |
+| `ADMIN_PASSWORD` | — | Admin password |
+| `ADMIN_NICKNAME` | `admin` | Admin display name |
+| `ALLOW_REGISTRATION` | `false` | Allow public registration |
+| `RUST_LOG` | `shcut_rust=info` | Log level |
 
 ## API
 
-Full REST API documentation: [docs/api.md](docs/api.md)
+### Auth
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/api/v1/auth/register` | Register new user |
+| `POST` | `/api/v1/auth/login` | Login (returns JWT) |
+| `GET` | `/api/v1/auth/me` | Get current user (auth required) |
+| `GET` | `/api/v1/auth/register-allowed` | Check if registration is open |
+
+### Shortcuts
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/v1/shortcuts` | List shortcuts (paginated, filterable) |
+| `POST` | `/api/v1/shortcuts` | Create shortcut (auth required) |
+| `GET` | `/api/v1/shortcuts/:id` | Get shortcut by ID |
+| `PUT` | `/api/v1/shortcuts/:id` | Update shortcut (owner/admin) |
+| `DELETE` | `/api/v1/shortcuts/:id` | Delete shortcut (owner/admin) |
+| `GET` | `/api/v1/shortcuts/by-name/:name` | Get shortcut by name |
+| `GET` | `/api/v1/shortcuts/:id/analytics` | Get shortcut analytics |
+| `GET` | `/s/:name` | Redirect to target URL (public) |
+
+**Query params for list:** `page`, `per_page`, `tag`, `search`, `visibility`, `creator_id`
+
+### Tags
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/v1/tags` | List all tags |
+
+### Settings
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/v1/settings` | Get workspace settings (public) |
+| `PUT` | `/api/v1/settings` | Update settings (admin) |
+| `POST` | `/api/v1/settings/logo` | Upload logo file (admin, multipart) |
+
+### Users
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/v1/users` | List users (admin) |
+| `PUT` | `/api/v1/users/:id` | Update user (self/admin) |
+
+## Development
+
+### Backend
+
+```bash
+cargo run
+```
+
+### Frontend
+
+```bash
+cd shcut-frontend-nuxt
+npm install
+npm run dev
+```
 
 ## Deployment
 
-Deployment and data migration instructions: [docs/deployment.md](docs/deployment.md)
+```bash
+# First time
+./deploy.sh
+
+# Rebuild without cache
+./rebuild.sh
+```
 
 ## License
 

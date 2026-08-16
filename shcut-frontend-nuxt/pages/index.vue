@@ -2,9 +2,8 @@
   <div>
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <!-- Stats -->
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
         <StatsCard label="Total Shortcuts" :value="shortcutsStore.total" icon="link" />
-        <StatsCard label="Collections" :value="collectionsStore.items.length" icon="folder" />
         <StatsCard label="Total Views" :value="totalViews" icon="eye" />
       </div>
 
@@ -248,7 +247,6 @@ import type { ShortcutWithTags, ShortcutCreatePayload } from '~/types/api'
 definePageMeta({ middleware: 'auth' })
 
 const shortcutsStore = useShortcutsStore()
-const collectionsStore = useCollectionsStore()
 const { success } = useToast()
 
 const viewMode = ref<'cards' | 'table'>('cards')
@@ -281,7 +279,6 @@ const loadTags = async () => {
 onMounted(async () => {
   await Promise.all([
     loadShortcuts(),
-    collectionsStore.fetchCollections(),
     loadTags(),
   ])
 })

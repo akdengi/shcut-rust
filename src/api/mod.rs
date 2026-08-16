@@ -1,6 +1,5 @@
 pub mod middleware;
 pub mod shortcuts;
-pub mod collections;
 pub mod auth;
 pub mod users;
 pub mod tags;
@@ -46,9 +45,6 @@ pub fn routes() -> Router<AppState> {
         .route("/api/v1/shortcuts/{id}", get(shortcuts::get).put(shortcuts::update).delete(shortcuts::delete))
         .route("/api/v1/shortcuts/by-name/{name}", get(shortcuts::get_by_name))
         .route("/api/v1/shortcuts/{id}/analytics", get(analytics::shortcut_analytics))
-        // Collections
-        .route("/api/v1/collections", get(collections::list).post(collections::create))
-        .route("/api/v1/collections/{id}", get(collections::get).put(collections::update).delete(collections::delete))
         // Tags
         .route("/api/v1/tags", get(tags::list))
         // Users (admin only)

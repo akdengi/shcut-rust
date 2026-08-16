@@ -102,38 +102,6 @@ pub struct Tag {
     pub name: String,
 }
 
-// ===== Collection =====
-
-#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
-pub struct Collection {
-    pub id: i64,
-    pub creator_id: i64,
-    pub created_ts: i64,
-    pub updated_ts: i64,
-    pub name: String,
-    pub title: String,
-    pub description: String,
-    pub visibility: String,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct CreateCollection {
-    pub name: String,
-    pub title: Option<String>,
-    pub description: Option<String>,
-    pub visibility: Option<String>,
-    pub shortcut_ids: Option<Vec<i64>>,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct UpdateCollection {
-    pub name: Option<String>,
-    pub title: Option<String>,
-    pub description: Option<String>,
-    pub visibility: Option<String>,
-    pub shortcut_ids: Option<Vec<i64>>,
-}
-
 // ===== Activity =====
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]

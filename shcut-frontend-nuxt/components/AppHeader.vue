@@ -26,15 +26,6 @@
           >
             Shortcuts
           </NuxtLink>
-          <NuxtLink
-            to="/collections"
-            class="px-3 py-2 rounded-md text-sm font-medium transition-colors
-                   text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800
-                   hover:text-gray-900 dark:hover:text-white"
-            active-class="!bg-indigo-50 !text-indigo-700 dark:!bg-indigo-900/30 dark:!text-indigo-400"
-          >
-            Collections
-          </NuxtLink>
         </nav>
 
         <!-- Right side -->
@@ -152,9 +143,6 @@
       <div v-if="showMobileNav" class="md:hidden py-3 border-t border-gray-100 dark:border-gray-800">
         <NuxtLink to="/shortcuts" class="block px-3 py-2 rounded-md text-base font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800" @click="showMobileNav = false">
           Shortcuts
-        </NuxtLink>
-        <NuxtLink to="/collections" class="block px-3 py-2 rounded-md text-base font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800" @click="showMobileNav = false">
-          Collections
         </NuxtLink>
       </div>
     </div>

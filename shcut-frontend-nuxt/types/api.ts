@@ -50,33 +50,6 @@ export interface ShortcutCreatePayload {
 
 export interface ShortcutUpdatePayload extends Partial<ShortcutCreatePayload> {}
 
-// ─── Collections ─────────────────────────────────────────
-
-export interface Collection {
-  id: number
-  creator_id: number
-  created_ts: string
-  updated_ts: string
-  name: string
-  title: string
-  description: string
-  visibility: 'workspace' | 'public'
-}
-
-export interface CollectionWithShortcuts extends Collection {
-  shortcut_ids: number[]
-}
-
-export interface CollectionCreatePayload {
-  name: string
-  title?: string
-  description?: string
-  visibility?: 'workspace' | 'public'
-  shortcut_ids?: number[]
-}
-
-export interface CollectionUpdatePayload extends Partial<CollectionCreatePayload> {}
-
 // ─── Tags ────────────────────────────────────────────────
 
 export interface Tag {

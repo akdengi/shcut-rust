@@ -109,7 +109,7 @@ fn is_public_route(path: &str) -> bool {
         return true;
     }
 
-    // Public shortcut/collection get (by name)
+    // Public shortcut get (by name)
     if path.contains("/by-name/") {
         return true;
     }
