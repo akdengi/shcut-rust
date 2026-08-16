@@ -2,19 +2,28 @@
   <div class="group bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 hover:shadow-md hover:border-indigo-200 dark:hover:border-indigo-800 transition-all duration-200">
     <div class="flex items-start justify-between gap-3">
       <div class="min-w-0 flex-1">
-        <!-- Name & link -->
-        <NuxtLink :to="`/shortcuts/${shortcut.id}`" class="block">
-          <div class="flex items-center gap-2">
-            <span class="text-lg font-semibold text-indigo-600 dark:text-indigo-400 truncate">
-              /{{ shortcut.name }}
-            </span>
-            <span class="opacity-0 group-hover:opacity-100 transition-opacity">
-              <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-              </svg>
-            </span>
-          </div>
-        </NuxtLink>
+        <!-- Name & short link -->
+        <div class="flex items-center gap-2">
+          <span class="text-lg font-semibold text-indigo-600 dark:text-indigo-400 truncate">
+            /{{ shortcut.name }}
+          </span>
+          <a
+            :href="`/s/${shortcut.name}`"
+            target="_blank"
+            class="opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-indigo-500"
+            title="Open short link"
+            @click.stop
+          >
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+            </svg>
+          </a>
+        </div>
+
+        <!-- Short link -->
+        <p class="mt-0.5 text-xs text-gray-400 dark:text-gray-500 font-mono">
+          {{ serverUrl }}/s/{{ shortcut.name }}
+        </p>
 
         <!-- Target URL -->
         <p class="mt-1 text-sm text-gray-500 dark:text-gray-400 truncate">
@@ -62,7 +71,8 @@
         <span
           v-for="tag in shortcut.tags"
           :key="tag"
-          class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400"
+          class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 cursor-pointer hover:bg-indigo-100 dark:hover:bg-indigo-900/50"
+          @click="$emit('filterTag', tag)"
         >
           {{ tag }}
         </span>
@@ -89,6 +99,13 @@
 <script setup lang="ts">
 import type { ShortcutWithTags } from '~/types/api'
 
+const serverUrl = computed(() => {
+  if (import.meta.client) {
+    return window.location.origin
+  }
+  return ''
+})
+
 defineProps<{
   shortcut: ShortcutWithTags
 }>()
@@ -96,5 +113,6 @@ defineProps<{
 defineEmits<{
   edit: [shortcut: ShortcutWithTags]
   delete: [shortcut: ShortcutWithTags]
+  filterTag: [tag: string]
 }>()
 </script>

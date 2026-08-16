@@ -92,6 +92,7 @@
           :shortcut="shortcut"
           @edit="editShortcut"
           @delete="confirmDelete"
+          @filter-tag="handleTagClick"
         />
       </div>
 
@@ -103,9 +104,11 @@
               <tr class="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
                 <th class="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">ID</th>
                 <th class="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Name</th>
+                <th class="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Short Link</th>
                 <th class="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Target URL</th>
                 <th class="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Tags</th>
                 <th class="px-4 py-3 text-center font-medium text-gray-500 dark:text-gray-400">Views</th>
+                <th class="px-4 py-3 text-center font-medium text-gray-500 dark:text-gray-400">Visibility</th>
                 <th class="px-4 py-3 text-right font-medium text-gray-500 dark:text-gray-400">Actions</th>
               </tr>
             </thead>
@@ -116,10 +119,17 @@
                 class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
               >
                 <td class="px-4 py-3 text-gray-500 dark:text-gray-400 font-mono text-xs">{{ shortcut.id }}</td>
+                <td class="px-4 py-3 font-semibold text-gray-900 dark:text-white">
+                  /{{ shortcut.name }}
+                </td>
                 <td class="px-4 py-3">
-                  <NuxtLink :to="`/shortcuts/${shortcut.id}`" class="font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">
-                    /{{ shortcut.name }}
-                  </NuxtLink>
+                  <a
+                    :href="`/s/${shortcut.name}`"
+                    target="_blank"
+                    class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline font-mono"
+                  >
+                    /s/{{ shortcut.name }}
+                  </a>
                 </td>
                 <td class="px-4 py-3 text-gray-500 dark:text-gray-400 max-w-xs truncate">{{ shortcut.link }}</td>
                 <td class="px-4 py-3">
@@ -128,13 +138,22 @@
                       v-for="tag in shortcut.tags"
                       :key="tag"
                       class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 cursor-pointer hover:bg-indigo-100 dark:hover:bg-indigo-900/50"
-                      @click="tagFilter = tag; handleFilterChange()"
+                      @click="handleTagClick(tag)"
                     >
                       {{ tag }}
                     </span>
                   </div>
                 </td>
                 <td class="px-4 py-3 text-center text-gray-500 dark:text-gray-400">{{ shortcut.view_count }}</td>
+                <td class="px-4 py-3 text-center">
+                  <span
+                    v-if="shortcut.visibility === 'public'"
+                    class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400"
+                  >
+                    Public
+                  </span>
+                  <span v-else class="text-gray-400 dark:text-gray-500 text-xs">Workspace</span>
+                </td>
                 <td class="px-4 py-3 text-right">
                   <div class="flex items-center justify-end gap-1">
                     <button
@@ -270,6 +289,11 @@ const handleFilterChange = () => {
   const params: any = { page: 1, per_page: perPage.value || 9999 }
   if (tagFilter.value) params.tag = tagFilter.value
   shortcutsStore.fetchShortcuts(params)
+}
+
+const handleTagClick = (tag: string) => {
+  tagFilter.value = tag
+  handleFilterChange()
 }
 
 const editShortcut = (shortcut: ShortcutWithTags) => {
