@@ -4,6 +4,7 @@ use axum::{
     Json,
 };
 use serde::Deserialize;
+use tracing::error;
 
 use super::AppState;
 use super::settings::get_bool_setting;
@@ -77,7 +78,10 @@ pub async fn shortcut_analytics(
     let activities = query_builder
         .fetch_all(&state.db)
         .await
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+        .map_err(|e| {
+            error!("Failed to fetch activities for shortcut {}: {}", id, e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
 
     // Aggregate data
     let mut reference_map = std::collections::HashMap::new();

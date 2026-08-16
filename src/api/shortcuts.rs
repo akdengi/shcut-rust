@@ -6,6 +6,7 @@ use axum::{
 use chrono::Utc;
 use serde::Deserialize;
 use std::net::SocketAddr;
+use tracing::error;
 
 use super::{AppState, auth_extractor::AuthClaims};
 use crate::db::models::{CreateShortcut, PaginatedResponse, Shortcut, ShortcutWithTags, UpdateShortcut};

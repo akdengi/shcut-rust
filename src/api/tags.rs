@@ -4,6 +4,7 @@ use axum::{
     Json,
 };
 use serde::{Deserialize, Serialize};
+use tracing::error;
 
 use super::AppState;
 use super::auth_extractor::AuthClaims;
@@ -38,7 +39,10 @@ pub async fn list(
     )
     .fetch_all(&state.db)
     .await
-    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    .map_err(|e| {
+        error!("Failed to fetch tags: {}", e);
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
 
     let result: Vec<TagWithCount> = tags
         .into_iter()
