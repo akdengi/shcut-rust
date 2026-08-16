@@ -7,7 +7,7 @@ pub mod analytics;
 pub mod auth_extractor;
 pub mod settings;
 
-use axum::{Router, routing::{get, post, put}, Json};
+use axum::{Router, routing::{get, post, put, delete}, Json};
 use serde_json::{json, Value};
 use sqlx::SqlitePool;
 use tower_http::services::ServeDir;
@@ -46,7 +46,8 @@ pub fn routes() -> Router<AppState> {
         .route("/api/v1/shortcuts/by-name/{name}", get(shortcuts::get_by_name))
         .route("/api/v1/shortcuts/{id}/analytics", get(analytics::shortcut_analytics))
         // Tags
-        .route("/api/v1/tags", get(tags::list))
+        .route("/api/v1/tags", get(tags::list).post(tags::create))
+        .route("/api/v1/tags/{id}", put(tags::rename).delete(tags::delete))
         .route("/api/v1/tags/{name}/shortcuts", get(tags::shortcuts_by_tag))
         // Users (admin only)
         .route("/api/v1/users", get(users::list))

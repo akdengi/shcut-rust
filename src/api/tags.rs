@@ -3,9 +3,21 @@ use axum::{
     http::StatusCode,
     Json,
 };
+use serde::Deserialize;
 
 use super::AppState;
-use crate::db::models::{Tag, Shortcut, ShortcutWithTags};
+use super::auth_extractor::AuthClaims;
+use crate::db::models::Tag;
+
+#[derive(Debug, Deserialize)]
+pub struct CreateTag {
+    pub name: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct UpdateTag {
+    pub name: String,
+}
 
 pub async fn list(
     State(state): State<AppState>,
@@ -18,12 +30,113 @@ pub async fn list(
     Ok(Json(tags))
 }
 
+pub async fn create(
+    State(state): State<AppState>,
+    _auth: AuthClaims,
+    Json(input): Json<CreateTag>,
+) -> Result<Json<Tag>, StatusCode> {
+    let name = input.name.trim().to_lowercase();
+    if name.is_empty() {
+        return Err(StatusCode::BAD_REQUEST);
+    }
+
+    // Check if tag already exists
+    let existing = sqlx::query_scalar::<_, i64>("SELECT id FROM tags WHERE name = ?")
+        .bind(&name)
+        .fetch_optional(&state.db)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    if existing.is_some() {
+        return Err(StatusCode::CONFLICT);
+    }
+
+    sqlx::query("INSERT INTO tags (name) VALUES (?)")
+        .bind(&name)
+        .execute(&state.db)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    let tag = sqlx::query_as::<_, Tag>("SELECT * FROM tags WHERE name = ?")
+        .bind(&name)
+        .fetch_one(&state.db)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    Ok(Json(tag))
+}
+
+pub async fn rename(
+    State(state): State<AppState>,
+    Path(id): Path<i64>,
+    _auth: AuthClaims,
+    Json(input): Json<UpdateTag>,
+) -> Result<Json<Tag>, StatusCode> {
+    let new_name = input.name.trim().to_lowercase();
+    if new_name.is_empty() {
+        return Err(StatusCode::BAD_REQUEST);
+    }
+
+    // Check if new name already exists
+    let existing = sqlx::query_scalar::<_, i64>("SELECT id FROM tags WHERE name = ? AND id != ?")
+        .bind(&new_name)
+        .bind(id)
+        .fetch_optional(&state.db)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    if existing.is_some() {
+        return Err(StatusCode::CONFLICT);
+    }
+
+    sqlx::query("UPDATE tags SET name = ? WHERE id = ?")
+        .bind(&new_name)
+        .bind(id)
+        .execute(&state.db)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    let tag = sqlx::query_as::<_, Tag>("SELECT * FROM tags WHERE id = ?")
+        .bind(id)
+        .fetch_one(&state.db)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    Ok(Json(tag))
+}
+
+pub async fn delete(
+    State(state): State<AppState>,
+    Path(id): Path<i64>,
+    _auth: AuthClaims,
+) -> Result<StatusCode, StatusCode> {
+    // Check if tag exists
+    let existing = sqlx::query_scalar::<_, i64>("SELECT id FROM tags WHERE id = ?")
+        .bind(id)
+        .fetch_optional(&state.db)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    if existing.is_none() {
+        return Err(StatusCode::NOT_FOUND);
+    }
+
+    // Delete tag (cascade will remove shortcut_tags entries)
+    sqlx::query("DELETE FROM tags WHERE id = ?")
+        .bind(id)
+        .execute(&state.db)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    Ok(StatusCode::NO_CONTENT)
+}
+
 pub async fn shortcuts_by_tag(
     State(state): State<AppState>,
     Path(name): Path<String>,
-) -> Result<Json<Vec<ShortcutWithTags>>, StatusCode> {
+) -> Result<Json<Vec<crate::db::models::ShortcutWithTags>>, StatusCode> {
     // Get all shortcuts that have this tag
-    let shortcuts = sqlx::query_as::<_, Shortcut>(
+    let shortcuts = sqlx::query_as::<_, crate::db::models::Shortcut>(
         "SELECT s.* FROM shortcuts s
          JOIN shortcut_tags st ON s.id = st.shortcut_id
          JOIN tags t ON st.tag_id = t.id
@@ -58,11 +171,11 @@ pub async fn shortcuts_by_tag(
     };
 
     // Build result
-    let result: Vec<ShortcutWithTags> = shortcuts
+    let result: Vec<crate::db::models::ShortcutWithTags> = shortcuts
         .into_iter()
         .map(|shortcut| {
             let tags = tags_map.get(&shortcut.id).cloned().unwrap_or_default();
-            ShortcutWithTags { shortcut, tags }
+            crate::db::models::ShortcutWithTags { shortcut, tags }
         })
         .collect();
 

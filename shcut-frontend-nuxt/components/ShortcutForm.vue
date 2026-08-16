@@ -98,74 +98,31 @@
 
     <!-- Tags -->
     <div>
-      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
         Tags
       </label>
-      <!-- Selected tags -->
-      <div v-if="selectedTags.length" class="flex flex-wrap gap-1.5 mb-2">
-        <span
-          v-for="tag in selectedTags"
+      <!-- Tag cloud -->
+      <div class="flex flex-wrap gap-2">
+        <button
+          v-for="tag in existingTags"
           :key="tag"
-          class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300"
+          type="button"
+          @click="toggleTag(tag)"
+          :class="[
+            'inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
+            selectedTags.includes(tag)
+              ? 'bg-indigo-600 text-white'
+              : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/30 hover:text-indigo-700 dark:hover:text-indigo-300'
+          ]"
         >
+          <svg v-if="selectedTags.includes(tag)" class="w-3.5 h-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+          </svg>
           {{ tag }}
-          <button
-            type="button"
-            @click="removeTag(tag)"
-            class="hover:text-indigo-900 dark:hover:text-indigo-100"
-          >
-            <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+        </button>
+        <span v-if="!existingTags.length" class="text-sm text-gray-500 dark:text-gray-400">
+          No tags available. Create tags in Settings → Tag Management.
         </span>
-      </div>
-      <!-- Tag input -->
-      <div class="relative">
-        <input
-          v-model="tagInput"
-          type="text"
-          placeholder="Type to add tags..."
-          class="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors"
-          @keydown.enter.prevent="addTagFromInput"
-          @keydown.tab.prevent="addTagFromInput"
-          @input="onTagInput"
-          @focus="showTagSuggestions = true"
-          @blur="hideTagSuggestions"
-        />
-        <!-- Suggestions dropdown -->
-        <div
-          v-if="showTagSuggestions && filteredTags.length"
-          class="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-40 overflow-y-auto"
-        >
-          <button
-            v-for="tag in filteredTags"
-            :key="tag"
-            type="button"
-            class="w-full text-left px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-            @mousedown.prevent="selectTag(tag)"
-          >
-            {{ tag }}
-          </button>
-        </div>
-      </div>
-      <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-        Press Enter or Tab to add a tag
-      </p>
-      <!-- Popular tags -->
-      <div v-if="popularTags.length" class="mt-2">
-        <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Popular:</p>
-        <div class="flex flex-wrap gap-1.5">
-          <button
-            v-for="tag in popularTags"
-            :key="tag"
-            type="button"
-            @click="selectTag(tag)"
-            class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/30 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors"
-          >
-            + {{ tag }}
-          </button>
-        </div>
       </div>
     </div>
 
@@ -244,8 +201,6 @@ const form = ref({
 })
 
 const selectedTags = ref<string[]>([])
-const tagInput = ref('')
-const showTagSuggestions = ref(false)
 const existingTags = ref<string[]>([])
 
 // Fetch existing tags
@@ -258,54 +213,14 @@ onMounted(async () => {
   }
 })
 
-// Filtered suggestions based on input
-const filteredTags = computed(() => {
-  const input = tagInput.value.toLowerCase().trim()
-  if (!input) {
-    // Show all tags that aren't already selected
-    return existingTags.value.filter(t => !selectedTags.value.includes(t))
-  }
-  return existingTags.value.filter(t =>
-    t.toLowerCase().includes(input) && !selectedTags.value.includes(t)
-  )
-})
-
-// Popular tags (top 5 that aren't selected)
-const popularTags = computed(() => {
-  return existingTags.value
-    .filter(t => !selectedTags.value.includes(t))
-    .slice(0, 5)
-})
-
-const selectTag = (tag: string) => {
-  if (!selectedTags.value.includes(tag)) {
+// Toggle tag selection
+const toggleTag = (tag: string) => {
+  const idx = selectedTags.value.indexOf(tag)
+  if (idx === -1) {
     selectedTags.value.push(tag)
+  } else {
+    selectedTags.value.splice(idx, 1)
   }
-  tagInput.value = ''
-  showTagSuggestions.value = false
-}
-
-const addTagFromInput = () => {
-  const tag = tagInput.value.trim().toLowerCase()
-  if (tag && !selectedTags.value.includes(tag)) {
-    selectedTags.value.push(tag)
-  }
-  tagInput.value = ''
-}
-
-const removeTag = (tag: string) => {
-  selectedTags.value = selectedTags.value.filter(t => t !== tag)
-}
-
-const onTagInput = () => {
-  showTagSuggestions.value = true
-}
-
-const hideTagSuggestions = () => {
-  // Delay to allow click on suggestion
-  setTimeout(() => {
-    showTagSuggestions.value = false
-  }, 200)
 }
 
 watch(
@@ -341,9 +256,6 @@ watch(
 )
 
 const handleSubmit = async () => {
-  // Auto-add tag from input if there's text
-  addTagFromInput()
-
   submitting.value = true
   try {
     const payload: ShortcutCreatePayload = {

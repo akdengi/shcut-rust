@@ -253,11 +253,12 @@
 
     <!-- Delete Confirmation -->
     <ConfirmDialog
-      v-if="deletingShortcut"
+      v-model="showDeleteConfirm"
       title="Delete Shortcut"
-      :message="`Are you sure you want to delete '${deletingShortcut.name}'?`"
+      :message="`Are you sure you want to delete '${deletingShortcut?.name}'?`"
+      confirm-text="Delete"
+      :danger="true"
       @confirm="handleDelete"
-      @cancel="deletingShortcut = null"
     />
   </div>
 </template>
@@ -277,6 +278,7 @@ const availableTags = ref<string[]>([])
 const showCreateDrawer = ref(false)
 const editingShortcut = ref<ShortcutWithTags | null>(null)
 const deletingShortcut = ref<ShortcutWithTags | null>(null)
+const showDeleteConfirm = ref(false)
 
 const loadShortcuts = () => {
   const params: any = { per_page: perPage.value || 9999 }
@@ -345,6 +347,7 @@ const editShortcut = (shortcut: ShortcutWithTags) => {
 
 const confirmDelete = (shortcut: ShortcutWithTags) => {
   deletingShortcut.value = shortcut
+  showDeleteConfirm.value = true
 }
 
 const handleDelete = async () => {
@@ -356,6 +359,7 @@ const handleDelete = async () => {
   } catch {
     // error handled by toast
   }
+  showDeleteConfirm.value = false
   deletingShortcut.value = null
 }
 
