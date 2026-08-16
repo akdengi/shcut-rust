@@ -84,10 +84,21 @@
       <!-- Views Chart -->
       <div v-if="analytics?.views_by_date?.length" class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 mb-8">
         <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-4">Views by Date</h3>
-        <div class="flex items-end gap-1 h-32">
-          <div v-for="day in analytics.views_by_date.slice(-30)" :key="day.date" class="flex-1 flex flex-col items-center gap-1">
-            <div class="w-full bg-indigo-500 rounded-t" :style="{ height: `${(day.count / maxViews) * 100}%`, minHeight: '4px' }" :title="`${day.date}: ${day.count} views`" />
-            <span class="text-[10px] text-gray-400 transform -rotate-45 origin-top-left">{{ day.date.slice(5) }}</span>
+        <div class="flex gap-2">
+          <!-- Y-axis labels -->
+          <div class="flex flex-col justify-between h-32 text-right w-8">
+            <span class="text-[10px] text-gray-400">{{ maxViews }}</span>
+            <span class="text-[10px] text-gray-400">{{ Math.round(maxViews * 0.75) }}</span>
+            <span class="text-[10px] text-gray-400">{{ Math.round(maxViews * 0.5) }}</span>
+            <span class="text-[10px] text-gray-400">{{ Math.round(maxViews * 0.25) }}</span>
+            <span class="text-[10px] text-gray-400">0</span>
+          </div>
+          <!-- Chart bars -->
+          <div class="flex-1 flex items-end gap-1 h-32 border-l border-b border-gray-200 dark:border-gray-700 pl-1 pb-6">
+            <div v-for="day in analytics.views_by_date.slice(-30)" :key="day.date" class="flex-1 flex flex-col items-center gap-1 min-w-0">
+              <div class="w-full bg-indigo-500 rounded-t hover:bg-indigo-600 transition-colors" :style="{ height: `${(day.count / maxViews) * 100}%`, minHeight: day.count > 0 ? '4px' : '0' }" :title="`${day.date}: ${day.count} views`" />
+              <span class="text-[9px] text-gray-400 transform -rotate-45 origin-top-left whitespace-nowrap">{{ day.date.slice(5) }}</span>
+            </div>
           </div>
         </div>
       </div>
