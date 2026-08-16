@@ -262,11 +262,11 @@ const handleSubmit = async () => {
       name: form.value.name,
       link: form.value.link,
       visibility: form.value.visibility,
+      tags: [...selectedTags.value],
     }
 
     if (form.value.title) payload.title = form.value.title
     if (form.value.description) payload.description = form.value.description
-    if (selectedTags.value.length) payload.tags = [...selectedTags.value]
     if (form.value.og_title) payload.og_title = form.value.og_title
     if (form.value.og_description) payload.og_description = form.value.og_description
     if (form.value.og_image) payload.og_image = form.value.og_image

@@ -298,7 +298,7 @@ pub async fn update(
     .await
     .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
-    // Update tags if provided
+    // Update tags (always, even if empty - to allow removing all tags)
     if let Some(tags) = &input.tags {
         // Remove existing tags
         sqlx::query("DELETE FROM shortcut_tags WHERE shortcut_id = ?")
@@ -307,10 +307,12 @@ pub async fn update(
             .await
             .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
-        // Add new tags
-        add_shortcut_tags(&state.db, id, tags)
-            .await
-            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+        // Add new tags (if any)
+        if !tags.is_empty() {
+            add_shortcut_tags(&state.db, id, tags)
+                .await
+                .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+        }
     }
 
     // Fetch updated shortcut

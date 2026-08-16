@@ -3,7 +3,7 @@ use axum::{
     http::StatusCode,
     Json,
 };
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use super::AppState;
 use super::auth_extractor::AuthClaims;
@@ -19,15 +19,33 @@ pub struct UpdateTag {
     pub name: String,
 }
 
+#[derive(Debug, Serialize)]
+pub struct TagWithCount {
+    pub id: i64,
+    pub name: String,
+    pub shortcut_count: i64,
+}
+
 pub async fn list(
     State(state): State<AppState>,
-) -> Result<Json<Vec<Tag>>, StatusCode> {
-    let tags = sqlx::query_as::<_, Tag>("SELECT * FROM tags ORDER BY name")
-        .fetch_all(&state.db)
-        .await
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+) -> Result<Json<Vec<TagWithCount>>, StatusCode> {
+    let tags = sqlx::query_as::<_, (i64, String, i64)>(
+        "SELECT t.id, t.name, COUNT(st.shortcut_id) as shortcut_count 
+         FROM tags t 
+         LEFT JOIN shortcut_tags st ON t.id = st.tag_id 
+         GROUP BY t.id, t.name 
+         ORDER BY t.name"
+    )
+    .fetch_all(&state.db)
+    .await
+    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
-    Ok(Json(tags))
+    let result: Vec<TagWithCount> = tags
+        .into_iter()
+        .map(|(id, name, shortcut_count)| TagWithCount { id, name, shortcut_count })
+        .collect();
+
+    Ok(Json(result))
 }
 
 pub async fn create(
@@ -63,7 +81,11 @@ pub async fn create(
         .await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
-    Ok(Json(tag))
+    Ok(Json(TagWithCount {
+        id: tag.id,
+        name: tag.name,
+        shortcut_count: 0,
+    }))
 }
 
 pub async fn rename(
@@ -71,7 +93,7 @@ pub async fn rename(
     Path(id): Path<i64>,
     _auth: AuthClaims,
     Json(input): Json<UpdateTag>,
-) -> Result<Json<Tag>, StatusCode> {
+) -> Result<Json<TagWithCount>, StatusCode> {
     let new_name = input.name.trim().to_lowercase();
     if new_name.is_empty() {
         return Err(StatusCode::BAD_REQUEST);
@@ -102,7 +124,20 @@ pub async fn rename(
         .await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
-    Ok(Json(tag))
+    // Get shortcut count
+    let shortcut_count = sqlx::query_scalar::<_, i64>(
+        "SELECT COUNT(*) FROM shortcut_tags WHERE tag_id = ?"
+    )
+    .bind(id)
+    .fetch_one(&state.db)
+    .await
+    .unwrap_or(0);
+
+    Ok(Json(TagWithCount {
+        id: tag.id,
+        name: tag.name,
+        shortcut_count,
+    }))
 }
 
 pub async fn delete(
