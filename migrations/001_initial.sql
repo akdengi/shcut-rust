@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS users (
     email TEXT NOT NULL UNIQUE,
     nickname TEXT NOT NULL,
     password_hash TEXT NOT NULL,
-    role TEXT NOT NULL CHECK (role IN ('admin', 'user', 'view')) DEFAULT 'view'
+    role TEXT NOT NULL CHECK (role IN ('admin', 'user')) DEFAULT 'user'
 );
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 
