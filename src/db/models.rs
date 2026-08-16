@@ -11,7 +11,7 @@ pub struct User {
     pub nickname: String,
     #[serde(skip_serializing)]
     pub password_hash: String,
-    pub role: String, // "admin" | "user"
+    pub role: String, // "admin" | "user" | "view"
 }
 
 #[derive(Debug, Deserialize)]
@@ -25,6 +25,7 @@ pub struct CreateUser {
 pub struct UpdateUser {
     pub nickname: Option<String>,
     pub email: Option<String>,
+    pub role: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]

@@ -41,17 +41,16 @@ pub async fn update(
 ) -> Result<Json<User>, StatusCode> {
     let current_user_id: i64 = auth.0.sub.parse().map_err(|_| StatusCode::UNAUTHORIZED)?;
 
-    // Check ownership or admin
-    if current_user_id != id {
-        let role = sqlx::query_scalar::<_, String>("SELECT role FROM users WHERE id = ?")
-            .bind(current_user_id)
-            .fetch_one(&state.db)
-            .await
-            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    // Get current user's role
+    let current_role = sqlx::query_scalar::<_, String>("SELECT role FROM users WHERE id = ?")
+        .bind(current_user_id)
+        .fetch_one(&state.db)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
-        if role != "admin" {
-            return Err(StatusCode::FORBIDDEN);
-        }
+    // Check ownership or admin
+    if current_user_id != id && current_role != "admin" {
+        return Err(StatusCode::FORBIDDEN);
     }
 
     // Check if user exists
@@ -66,13 +65,33 @@ pub async fn update(
         None => return Err(StatusCode::NOT_FOUND),
     };
 
+    // Role change: only admin can change roles, and cannot change to admin
+    let new_role = if let Some(ref role) = input.role {
+        if current_role != "admin" {
+            return Err(StatusCode::FORBIDDEN); // non-admin cannot change role
+        }
+        if role == "admin" {
+            return Err(StatusCode::FORBIDDEN); // cannot assign admin role
+        }
+        if current_user_id == id {
+            return Err(StatusCode::FORBIDDEN); // cannot change own role
+        }
+        if role != "user" && role != "view" {
+            return Err(StatusCode::BAD_REQUEST); // invalid role
+        }
+        role.clone()
+    } else {
+        existing.role.clone()
+    };
+
     let now = Utc::now().timestamp();
 
     sqlx::query(
-        "UPDATE users SET nickname = ?, email = ?, updated_ts = ? WHERE id = ?",
+        "UPDATE users SET nickname = ?, email = ?, role = ?, updated_ts = ? WHERE id = ?",
     )
     .bind(input.nickname.as_deref().unwrap_or(&existing.nickname))
     .bind(input.email.as_deref().unwrap_or(&existing.email))
+    .bind(&new_role)
     .bind(now)
     .bind(id)
     .execute(&state.db)

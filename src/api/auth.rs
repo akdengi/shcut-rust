@@ -85,7 +85,7 @@ pub async fn register(
     {
         "admin" // First user becomes admin
     } else {
-        "user"
+        "view" // New users default to view-only
     };
 
     // Insert user

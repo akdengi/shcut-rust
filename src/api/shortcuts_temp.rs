@@ -175,17 +175,6 @@ pub async fn create(
 ) -> Result<Json<ShortcutWithTags>, StatusCode> {
     let user_id: i64 = auth.0.sub.parse().map_err(|_| StatusCode::UNAUTHORIZED)?;
 
-    // Check role - only admin and user can create
-    let role = sqlx::query_scalar::<_, String>("SELECT role FROM users WHERE id = ?")
-        .bind(user_id)
-        .fetch_one(&state.db)
-        .await
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-
-    if role == "view" {
-        return Err(StatusCode::FORBIDDEN);
-    }
-
     // Check if name is unique
     let existing = sqlx::query_scalar::<_, i64>("SELECT id FROM shortcuts WHERE name = ?")
         .bind(&input.name)
@@ -250,17 +239,6 @@ pub async fn update(
 ) -> Result<Json<ShortcutWithTags>, StatusCode> {
     let user_id: i64 = auth.0.sub.parse().map_err(|_| StatusCode::UNAUTHORIZED)?;
 
-    // Check role
-    let role = sqlx::query_scalar::<_, String>("SELECT role FROM users WHERE id = ?")
-        .bind(user_id)
-        .fetch_one(&state.db)
-        .await
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-
-    if role == "view" {
-        return Err(StatusCode::FORBIDDEN);
-    }
-
     // Check ownership
     let existing = sqlx::query_as::<_, Shortcut>("SELECT * FROM shortcuts WHERE id = ?")
         .bind(id)
@@ -273,9 +251,17 @@ pub async fn update(
         None => return Err(StatusCode::NOT_FOUND),
     };
 
-    // user role can only edit their own shortcuts
-    if role == "user" && existing.creator_id != user_id {
-        return Err(StatusCode::FORBIDDEN);
+    if existing.creator_id != user_id {
+        // Check if user is admin
+        let is_admin = sqlx::query_scalar::<_, String>("SELECT role FROM users WHERE id = ?")
+            .bind(user_id)
+            .fetch_one(&state.db)
+            .await
+            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+        if is_admin != "admin" {
+            return Err(StatusCode::FORBIDDEN);
+        }
     }
 
     let now = Utc::now().timestamp();
@@ -334,26 +320,29 @@ pub async fn delete(
 ) -> Result<StatusCode, StatusCode> {
     let user_id: i64 = auth.0.sub.parse().map_err(|_| StatusCode::UNAUTHORIZED)?;
 
-    // Only admin can delete shortcuts
-    let role = sqlx::query_scalar::<_, String>("SELECT role FROM users WHERE id = ?")
-        .bind(user_id)
-        .fetch_one(&state.db)
-        .await
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-
-    if role != "admin" {
-        return Err(StatusCode::FORBIDDEN);
-    }
-
-    // Check if shortcut exists
-    let existing = sqlx::query_scalar::<_, i64>("SELECT id FROM shortcuts WHERE id = ?")
+    // Check ownership
+    let existing = sqlx::query_as::<_, Shortcut>("SELECT * FROM shortcuts WHERE id = ?")
         .bind(id)
         .fetch_optional(&state.db)
         .await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
-    if existing.is_none() {
-        return Err(StatusCode::NOT_FOUND);
+    let existing = match existing {
+        Some(s) => s,
+        None => return Err(StatusCode::NOT_FOUND),
+    };
+
+    if existing.creator_id != user_id {
+        // Check if user is admin
+        let is_admin = sqlx::query_scalar::<_, String>("SELECT role FROM users WHERE id = ?")
+            .bind(user_id)
+            .fetch_one(&state.db)
+            .await
+            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+        if is_admin != "admin" {
+            return Err(StatusCode::FORBIDDEN);
+        }
     }
 
     sqlx::query("DELETE FROM shortcuts WHERE id = ?")
@@ -365,228 +354,3 @@ pub async fn delete(
     Ok(StatusCode::NO_CONTENT)
 }
 
-pub async fn redirect(
-    State(state): State<AppState>,
-    Path(name): Path<String>,
-    axum::extract::OriginalUri(uri): axum::extract::OriginalUri,
-    headers: HeaderMap,
-    ConnectInfo(addr): ConnectInfo<SocketAddr>,
-) -> Result<axum::response::Redirect, StatusCode> {
-    // Only SELECT needed for redirect URL
-    let shortcut = sqlx::query_as::<_, Shortcut>("SELECT * FROM shortcuts WHERE name = ?")
-        .bind(&name)
-        .fetch_optional(&state.db)
-        .await
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-
-    match shortcut {
-        Some(s) => {
-            let target = s.link.clone();
-
-            // Capture request data for background task
-            let user_agent = headers
-                .get("user-agent")
-                .and_then(|v| v.to_str().ok())
-                .unwrap_or("unknown")
-                .to_string();
-            let referer = headers
-                .get("referer")
-                .and_then(|v| v.to_str().ok())
-                .unwrap_or("direct")
-                .to_string();
-            let ip = addr.ip().to_string();
-            let query = uri.query().unwrap_or("").to_string();
-
-            // ALL database work in background - redirect is instant
-            let db = state.db.clone();
-            let creator_id = s.creator_id;
-            let shortcut_id = s.id;
-            tokio::spawn(async move {
-                // Increment view count
-                let _ = sqlx::query("UPDATE shortcuts SET view_count = view_count + 1 WHERE id = ?")
-                    .bind(shortcut_id)
-                    .execute(&db)
-                    .await;
-
-                // Check analytics settings
-                let analytics_enabled = super::settings::get_bool_setting(&db, "analytics_enabled", true).await;
-                if !analytics_enabled {
-                    return;
-                }
-
-                let collect_geo = super::settings::get_bool_setting(&db, "analytics_geolocation", true).await;
-                let collect_utm = super::settings::get_bool_setting(&db, "analytics_utm", true).await;
-                let collect_referrer = super::settings::get_bool_setting(&db, "analytics_referrer", true).await;
-
-                let (device, browser, os) = parse_user_agent(&user_agent);
-                let referer_domain = if collect_referrer { extract_domain(&referer) } else { "direct".to_string() };
-                let utm_source = if collect_utm { extract_utm_param(&query, "utm_source") } else { None };
-                let utm_medium = if collect_utm { extract_utm_param(&query, "utm_medium") } else { None };
-                let utm_campaign = if collect_utm { extract_utm_param(&query, "utm_campaign") } else { None };
-                let (country, city) = if collect_geo { get_geo_from_ip(&ip).await } else { (None, None) };
-
-                let now = Utc::now().timestamp();
-                let payload = serde_json::json!({
-                    "referer": referer,
-                    "referer_domain": referer_domain,
-                    "user_agent": user_agent,
-                    "device": device,
-                    "browser": browser,
-                    "os": os,
-                    "ip": ip,
-                    "country": country,
-                    "city": city,
-                    "utm_source": utm_source,
-                    "utm_medium": utm_medium,
-                    "utm_campaign": utm_campaign,
-                });
-
-                let _ = sqlx::query(
-                    "INSERT INTO activities (creator_id, created_ts, type, level, payload, shortcut_id, referer, user_agent, ip_country, ip_city, utm_source, utm_medium, utm_campaign) VALUES (?, ?, 'shortcut.view', 'info', ?, ?, ?, ?, ?, ?, ?, ?, ?)"
-                )
-                .bind(creator_id)
-                .bind(now)
-                .bind(payload.to_string())
-                .bind(shortcut_id)
-                .bind(&referer)
-                .bind(&user_agent)
-                .bind(&country)
-                .bind(&city)
-                .bind(&utm_source)
-                .bind(&utm_medium)
-                .bind(&utm_campaign)
-                .execute(&db)
-                .await;
-            });
-
-            // Redirect IMMEDIATELY - only waited for SELECT
-            Ok(axum::response::Redirect::temporary(&target))
-        }
-        None => Err(StatusCode::NOT_FOUND),
-    }
-}
-
-fn parse_user_agent(ua: &str) -> (String, String, String) {
-    let ua_lower = ua.to_lowercase();
-
-    // Detect device type
-    let device = if ua_lower.contains("mobile") || ua_lower.contains("android") || ua_lower.contains("iphone") {
-        "Mobile"
-    } else if ua_lower.contains("tablet") || ua_lower.contains("ipad") {
-        "Tablet"
-    } else {
-        "Desktop"
-    };
-
-    // Detect browser
-    let browser = if ua_lower.contains("firefox/") {
-        "Firefox"
-    } else if ua_lower.contains("edg/") || ua_lower.contains("edge/") {
-        "Edge"
-    } else if ua_lower.contains("chrome/") && !ua_lower.contains("chromium") {
-        "Chrome"
-    } else if ua_lower.contains("safari/") && !ua_lower.contains("chrome") {
-        "Safari"
-    } else if ua_lower.contains("opera/") || ua_lower.contains("opr/") {
-        "Opera"
-    } else {
-        "Other"
-    };
-
-    // Detect OS
-    let os = if ua_lower.contains("windows") {
-        "Windows"
-    } else if ua_lower.contains("mac os") || ua_lower.contains("macos") {
-        "macOS"
-    } else if ua_lower.contains("linux") && !ua_lower.contains("android") {
-        "Linux"
-    } else if ua_lower.contains("android") {
-        "Android"
-    } else if ua_lower.contains("iphone") || ua_lower.contains("ipad") || ua_lower.contains("ios") {
-        "iOS"
-    } else {
-        "Other"
-    };
-
-    (device.to_string(), browser.to_string(), os.to_string())
-}
-
-fn extract_domain(url: &str) -> String {
-    if url == "direct" || url.is_empty() {
-        return "direct".to_string();
-    }
-    let without_protocol = url.strip_prefix("https://").or_else(|| url.strip_prefix("http://")).unwrap_or(url);
-    without_protocol.split('/').next().unwrap_or("unknown").to_string()
-}
-
-fn extract_utm_param(query: &str, param: &str) -> Option<String> {
-    for pair in query.split('&') {
-        let mut parts = pair.splitn(2, '=');
-        if let (Some(key), Some(value)) = (parts.next(), parts.next()) {
-            if key == param {
-                return Some(value.to_string());
-            }
-        }
-    }
-    None
-}
-
-async fn get_geo_from_ip(ip: &str) -> (Option<String>, Option<String>) {
-    // Skip local/private IPs
-    if ip.starts_with("127.") || ip.starts_with("10.") || ip.starts_with("192.168.") || ip.starts_with("172.") || ip == "::1" {
-        return (None, None);
-    }
-
-    // Call ip-api.com (free, no key needed, rate limited to 45 req/min)
-    let url = format!("http://ip-api.com/json/{}?fields=country,city", ip);
-    match reqwest::get(&url).await {
-        Ok(resp) => {
-            match resp.json::<serde_json::Value>().await {
-                Ok(data) => {
-                    let country = data.get("country").and_then(|v| v.as_str()).map(|s| s.to_string());
-                    let city = data.get("city").and_then(|v| v.as_str()).map(|s| s.to_string());
-                    (country, city)
-                }
-                Err(_) => (None, None),
-            }
-        }
-        Err(_) => (None, None),
-    }
-}
-
-// Helper functions
-
-async fn get_shortcut_tags(db: &sqlx::SqlitePool, shortcut_id: i64) -> Result<Vec<String>, sqlx::Error> {
-    let tags = sqlx::query_scalar::<_, String>(
-        "SELECT t.name FROM tags t JOIN shortcut_tags st ON t.id = st.tag_id WHERE st.shortcut_id = ?",
-    )
-    .bind(shortcut_id)
-    .fetch_all(db)
-    .await?;
-
-    Ok(tags)
-}
-
-async fn add_shortcut_tags(db: &sqlx::SqlitePool, shortcut_id: i64, tags: &[String]) -> Result<(), sqlx::Error> {
-    for tag_name in tags {
-        // Insert or get tag
-        sqlx::query("INSERT OR IGNORE INTO tags (name) VALUES (?)")
-            .bind(tag_name)
-            .execute(db)
-            .await?;
-
-        let tag_id = sqlx::query_scalar::<_, i64>("SELECT id FROM tags WHERE name = ?")
-            .bind(tag_name)
-            .fetch_one(db)
-            .await?;
-
-        // Link shortcut to tag
-        sqlx::query("INSERT OR IGNORE INTO shortcut_tags (shortcut_id, tag_id) VALUES (?, ?)")
-            .bind(shortcut_id)
-            .bind(tag_id)
-            .execute(db)
-            .await?;
-    }
-
-    Ok(())
-}

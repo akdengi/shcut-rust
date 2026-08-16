@@ -60,8 +60,9 @@
           </div>
         </div>
 
-        <!-- New Shortcut button -->
+        <!-- New Shortcut button (admin and user only) -->
         <button
+          v-if="authStore.canEdit"
           @click="showCreateDrawer = true"
           class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
         >
@@ -269,6 +270,7 @@ import type { ShortcutWithTags, ShortcutCreatePayload } from '~/types/api'
 definePageMeta({ middleware: 'auth' })
 
 const shortcutsStore = useShortcutsStore()
+const authStore = useAuthStore()
 const { success } = useToast()
 
 const viewMode = ref<'cards' | 'table'>('cards')
