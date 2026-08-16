@@ -6,7 +6,7 @@ description = "shcut - Self-hosted URL shortener"
 
 [dependencies]
 # Web framework
-axum = { version = "0.8", features = ["macros"] }
+axum = { version = "0.8", features = ["macros", "multipart"] }
 tower = "0.5"
 tower-http = { version = "0.6", features = ["cors", "fs", "trace"] }
 tokio = { version = "1", features = ["full"] }

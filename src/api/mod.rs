@@ -11,6 +11,7 @@ pub mod settings;
 use axum::{Router, routing::{get, post, put}, Json};
 use serde_json::{json, Value};
 use sqlx::SqlitePool;
+use tower_http::services::ServeDir;
 
 use crate::config::Config;
 
@@ -55,8 +56,12 @@ pub fn routes() -> Router<AppState> {
         .route("/api/v1/users/{id}", put(users::update))
         // Workspace settings (public read, admin write)
         .route("/api/v1/settings", get(settings::get_settings).put(settings::update_settings))
+        // Logo upload
+        .route("/api/v1/settings/logo", post(settings::upload_logo))
         // Redirect (public)
-        .route("/s/{name}", get(shortcuts::redirect));
+        .route("/s/{name}", get(shortcuts::redirect))
+        // Serve uploaded files
+        .nest_service("/uploads", ServeDir::new("/app/data/uploads"));
 
     api_routes
 }

@@ -48,6 +48,11 @@ async fn main() {
     let parent = abs_path.parent().unwrap_or(std::path::Path::new("."));
     std::fs::create_dir_all(parent).expect("Cannot create database directory");
 
+    // Ensure uploads directory exists
+    let uploads_dir = parent.join("uploads");
+    std::fs::create_dir_all(&uploads_dir).expect("Cannot create uploads directory");
+    tracing::info!("Uploads directory: {}", uploads_dir.display());
+
     // Debug: check what we can do
     tracing::info!("DB file path: {}", abs_path.display());
     tracing::info!("DB parent dir: {}", parent.display());

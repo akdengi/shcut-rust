@@ -104,6 +104,11 @@ fn is_public_route(path: &str) -> bool {
         return true;
     }
 
+    // Uploaded files (logos, etc.)
+    if path.starts_with("/uploads/") {
+        return true;
+    }
+
     // Public shortcut/collection get (by name)
     if path.contains("/by-name/") {
         return true;
