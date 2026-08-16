@@ -69,10 +69,36 @@ export interface ShortcutAnalytics {
   references: AnalyticsEntry[]
   devices: AnalyticsEntry[]
   browsers: AnalyticsEntry[]
+  os: AnalyticsEntry[]
   countries: AnalyticsEntry[]
+  cities: AnalyticsEntry[]
   utm_sources: AnalyticsEntry[]
   utm_mediums: AnalyticsEntry[]
   utm_campaigns: AnalyticsEntry[]
+  activities: ActivityEntry[]
+  views_by_date: ViewsByDate[]
+}
+
+export interface ActivityEntry {
+  id: number
+  created_ts: number
+  ip?: string
+  device?: string
+  browser?: string
+  os?: string
+  country?: string
+  city?: string
+  referer?: string
+  referer_domain?: string
+  utm_source?: string
+  utm_medium?: string
+  utm_campaign?: string
+  user_agent?: string
+}
+
+export interface ViewsByDate {
+  date: string
+  count: number
 }
 
 // ─── Pagination ──────────────────────────────────────────

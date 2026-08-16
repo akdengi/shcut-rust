@@ -76,15 +76,15 @@
         </span>
       </div>
 
-      <!-- Stats -->
+      <!-- Stats Grid -->
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
         <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
           <p class="text-sm text-gray-500 dark:text-gray-400">Total Views</p>
           <p class="mt-1 text-2xl font-bold text-gray-900 dark:text-white">{{ shortcut.view_count }}</p>
         </div>
         <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
-          <p class="text-sm text-gray-500 dark:text-gray-400">Devices</p>
-          <p class="mt-1 text-2xl font-bold text-gray-900 dark:text-white">{{ analytics?.devices?.length || 0 }}</p>
+          <p class="text-sm text-gray-500 dark:text-gray-400">Countries</p>
+          <p class="mt-1 text-2xl font-bold text-gray-900 dark:text-white">{{ analytics?.countries?.length || 0 }}</p>
         </div>
         <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
           <p class="text-sm text-gray-500 dark:text-gray-400">Browsers</p>
@@ -96,8 +96,28 @@
         </div>
       </div>
 
-      <!-- Devices & Browsers -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+      <!-- Views Chart (simple bar chart) -->
+      <div v-if="analytics?.views_by_date?.length" class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 mb-8">
+        <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-4">Views by Date</h3>
+        <div class="flex items-end gap-1 h-32">
+          <div
+            v-for="day in analytics.views_by_date.slice(-30)"
+            :key="day.date"
+            class="flex-1 flex flex-col items-center gap-1"
+          >
+            <div
+              class="w-full bg-indigo-500 rounded-t"
+              :style="{ height: `${(day.count / maxViews) * 100}%`, minHeight: '4px' }"
+              :title="`${day.date}: ${day.count} views`"
+            />
+            <span class="text-[10px] text-gray-400 transform -rotate-45 origin-top-left">{{ day.date.slice(5) }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Analytics Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        <!-- Devices -->
         <div v-if="analytics?.devices?.length" class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
           <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-3">Devices</h3>
           <div class="space-y-2">
@@ -108,10 +128,55 @@
           </div>
         </div>
 
+        <!-- Browsers -->
         <div v-if="analytics?.browsers?.length" class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
           <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-3">Browsers</h3>
           <div class="space-y-2">
             <div v-for="item in analytics.browsers" :key="item.name" class="flex items-center justify-between">
+              <span class="text-sm text-gray-600 dark:text-gray-400">{{ item.name }}</span>
+              <span class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ item.count }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- OS -->
+        <div v-if="analytics?.os?.length" class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
+          <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-3">Operating Systems</h3>
+          <div class="space-y-2">
+            <div v-for="item in analytics.os" :key="item.name" class="flex items-center justify-between">
+              <span class="text-sm text-gray-600 dark:text-gray-400">{{ item.name }}</span>
+              <span class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ item.count }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Countries -->
+        <div v-if="analytics?.countries?.length" class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
+          <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-3">Countries</h3>
+          <div class="space-y-2">
+            <div v-for="item in analytics.countries" :key="item.name" class="flex items-center justify-between">
+              <span class="text-sm text-gray-600 dark:text-gray-400">{{ item.name }}</span>
+              <span class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ item.count }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Referrer Domains -->
+        <div v-if="analytics?.references?.length" class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
+          <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-3">Referrers</h3>
+          <div class="space-y-2">
+            <div v-for="item in analytics.references" :key="item.name" class="flex items-center justify-between">
+              <span class="text-sm text-gray-600 dark:text-gray-400 truncate max-w-[150px]">{{ item.name }}</span>
+              <span class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ item.count }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- UTM Sources -->
+        <div v-if="analytics?.utm_sources?.length" class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
+          <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-3">UTM Sources</h3>
+          <div class="space-y-2">
+            <div v-for="item in analytics.utm_sources" :key="item.name" class="flex items-center justify-between">
               <span class="text-sm text-gray-600 dark:text-gray-400">{{ item.name }}</span>
               <span class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ item.count }}</span>
             </div>
@@ -130,31 +195,39 @@
               <tr class="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
                 <th class="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Time</th>
                 <th class="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">IP</th>
+                <th class="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Country</th>
                 <th class="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Device</th>
+                <th class="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">OS</th>
                 <th class="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Browser</th>
                 <th class="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Referrer</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
               <tr v-for="activity in activities" :key="activity.id" class="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                <td class="px-4 py-3 text-gray-500 dark:text-gray-400 text-xs">
+                <td class="px-4 py-3 text-gray-500 dark:text-gray-400 text-xs whitespace-nowrap">
                   {{ formatTime(activity.created_ts) }}
                 </td>
                 <td class="px-4 py-3 text-gray-500 dark:text-gray-400 text-xs font-mono">
                   {{ activity.ip || '—' }}
                 </td>
                 <td class="px-4 py-3 text-gray-500 dark:text-gray-400 text-xs">
+                  {{ activity.country || '—' }}
+                </td>
+                <td class="px-4 py-3 text-gray-500 dark:text-gray-400 text-xs">
                   {{ activity.device || '—' }}
+                </td>
+                <td class="px-4 py-3 text-gray-500 dark:text-gray-400 text-xs">
+                  {{ activity.os || '—' }}
                 </td>
                 <td class="px-4 py-3 text-gray-500 dark:text-gray-400 text-xs">
                   {{ activity.browser || '—' }}
                 </td>
-                <td class="px-4 py-3 text-gray-500 dark:text-gray-400 text-xs truncate max-w-[200px]">
-                  {{ activity.referer || 'Direct' }}
+                <td class="px-4 py-3 text-gray-500 dark:text-gray-400 text-xs truncate max-w-[150px]">
+                  {{ activity.referer_domain || 'Direct' }}
                 </td>
               </tr>
               <tr v-if="!activities.length">
-                <td colspan="5" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400 text-sm">
+                <td colspan="7" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400 text-sm">
                   No activity yet
                 </td>
               </tr>
@@ -188,11 +261,12 @@
 
     <!-- Delete confirm -->
     <ConfirmDialog
-      v-if="showDeleteConfirm"
+      v-model="showDeleteConfirm"
       title="Delete Shortcut"
       :message="`Are you sure you want to delete '${shortcut?.name}'?`"
+      confirm-text="Delete"
+      :danger="true"
       @confirm="handleDelete"
-      @cancel="showDeleteConfirm = false"
     />
   </div>
 </template>
@@ -225,6 +299,11 @@ const serverUrl = computed(() => {
 
 const shortcut = computed(() => shortcutsStore.current)
 
+const maxViews = computed(() => {
+  if (!analytics.value?.views_by_date?.length) return 1
+  return Math.max(...analytics.value.views_by_date.map(d => d.count), 1)
+})
+
 const formatTime = (ts: number) => {
   return new Date(ts * 1000).toLocaleString()
 }
@@ -255,7 +334,6 @@ const copyLink = async () => {
     toast.success('Link copied')
     setTimeout(() => { copied.value = false }, 2000)
   } catch {
-    // fallback
     const input = document.createElement('input')
     input.value = link
     document.body.appendChild(input)

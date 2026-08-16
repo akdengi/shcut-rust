@@ -357,6 +357,7 @@ pub async fn delete(
 pub async fn redirect(
     State(state): State<AppState>,
     Path(name): Path<String>,
+    axum::extract::OriginalUri(uri): axum::extract::OriginalUri,
     headers: HeaderMap,
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
 ) -> Result<axum::response::Redirect, StatusCode> {
@@ -379,37 +380,58 @@ pub async fn redirect(
             let user_agent = headers
                 .get("user-agent")
                 .and_then(|v| v.to_str().ok())
-                .unwrap_or("unknown");
+                .unwrap_or("unknown")
+                .to_string();
             let referer = headers
                 .get("referer")
                 .and_then(|v| v.to_str().ok())
-                .unwrap_or("direct");
+                .unwrap_or("direct")
+                .to_string();
 
-            let (device, browser) = parse_user_agent(user_agent);
+            let (device, browser, os) = parse_user_agent(&user_agent);
             let ip = addr.ip().to_string();
+            let referer_domain = extract_domain(&referer);
 
-            // Parse UTM parameters from the original request URI
-            // (not available here, but we store what we have)
+            // Parse UTM parameters from the request URI
+            let query = uri.query().unwrap_or("");
+            let utm_source = extract_utm_param(query, "utm_source");
+            let utm_medium = extract_utm_param(query, "utm_medium");
+            let utm_campaign = extract_utm_param(query, "utm_campaign");
+
+            // Get geolocation from IP (non-blocking, best effort)
+            let (country, city) = get_geo_from_ip(&ip).await;
 
             // Create activity record
             let now = Utc::now().timestamp();
             let payload = serde_json::json!({
                 "referer": referer,
+                "referer_domain": referer_domain,
                 "user_agent": user_agent,
                 "device": device,
                 "browser": browser,
+                "os": os,
                 "ip": ip,
+                "country": country,
+                "city": city,
+                "utm_source": utm_source,
+                "utm_medium": utm_medium,
+                "utm_campaign": utm_campaign,
             });
 
             let _ = sqlx::query(
-                "INSERT INTO activities (creator_id, created_ts, type, level, payload, shortcut_id, referer, user_agent) VALUES (?, ?, 'shortcut.view', 'info', ?, ?, ?, ?)"
+                "INSERT INTO activities (creator_id, created_ts, type, level, payload, shortcut_id, referer, user_agent, ip_country, ip_city, utm_source, utm_medium, utm_campaign) VALUES (?, ?, 'shortcut.view', 'info', ?, ?, ?, ?, ?, ?, ?, ?, ?)"
             )
             .bind(s.creator_id)
             .bind(now)
             .bind(payload.to_string())
             .bind(s.id)
-            .bind(referer)
-            .bind(user_agent)
+            .bind(&referer)
+            .bind(&user_agent)
+            .bind(&country)
+            .bind(&city)
+            .bind(&utm_source)
+            .bind(&utm_medium)
+            .bind(&utm_campaign)
             .execute(&state.db)
             .await;
 
@@ -419,7 +441,7 @@ pub async fn redirect(
     }
 }
 
-fn parse_user_agent(ua: &str) -> (String, String) {
+fn parse_user_agent(ua: &str) -> (String, String, String) {
     let ua_lower = ua.to_lowercase();
 
     // Detect device type
@@ -446,7 +468,65 @@ fn parse_user_agent(ua: &str) -> (String, String) {
         "Other"
     };
 
-    (device.to_string(), browser.to_string())
+    // Detect OS
+    let os = if ua_lower.contains("windows") {
+        "Windows"
+    } else if ua_lower.contains("mac os") || ua_lower.contains("macos") {
+        "macOS"
+    } else if ua_lower.contains("linux") && !ua_lower.contains("android") {
+        "Linux"
+    } else if ua_lower.contains("android") {
+        "Android"
+    } else if ua_lower.contains("iphone") || ua_lower.contains("ipad") || ua_lower.contains("ios") {
+        "iOS"
+    } else {
+        "Other"
+    };
+
+    (device.to_string(), browser.to_string(), os.to_string())
+}
+
+fn extract_domain(url: &str) -> String {
+    if url == "direct" || url.is_empty() {
+        return "direct".to_string();
+    }
+    let without_protocol = url.strip_prefix("https://").or_else(|| url.strip_prefix("http://")).unwrap_or(url);
+    without_protocol.split('/').next().unwrap_or("unknown").to_string()
+}
+
+fn extract_utm_param(query: &str, param: &str) -> Option<String> {
+    for pair in query.split('&') {
+        let mut parts = pair.splitn(2, '=');
+        if let (Some(key), Some(value)) = (parts.next(), parts.next()) {
+            if key == param {
+                return Some(value.to_string());
+            }
+        }
+    }
+    None
+}
+
+async fn get_geo_from_ip(ip: &str) -> (Option<String>, Option<String>) {
+    // Skip local/private IPs
+    if ip.starts_with("127.") || ip.starts_with("10.") || ip.starts_with("192.168.") || ip.starts_with("172.") || ip == "::1" {
+        return (None, None);
+    }
+
+    // Call ip-api.com (free, no key needed, rate limited to 45 req/min)
+    let url = format!("http://ip-api.com/json/{}?fields=country,city", ip);
+    match reqwest::get(&url).await {
+        Ok(resp) => {
+            match resp.json::<serde_json::Value>().await {
+                Ok(data) => {
+                    let country = data.get("country").and_then(|v| v.as_str()).map(|s| s.to_string());
+                    let city = data.get("city").and_then(|v| v.as_str()).map(|s| s.to_string());
+                    (country, city)
+                }
+                Err(_) => (None, None),
+            }
+        }
+        Err(_) => (None, None),
+    }
 }
 
 // Helper functions

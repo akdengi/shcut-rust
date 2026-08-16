@@ -142,11 +142,14 @@ pub struct ShortcutAnalytics {
     pub references: Vec<AnalyticsItem>,
     pub devices: Vec<AnalyticsItem>,
     pub browsers: Vec<AnalyticsItem>,
+    pub os: Vec<AnalyticsItem>,
     pub countries: Vec<AnalyticsItem>,
+    pub cities: Vec<AnalyticsItem>,
     pub utm_sources: Vec<AnalyticsItem>,
     pub utm_mediums: Vec<AnalyticsItem>,
     pub utm_campaigns: Vec<AnalyticsItem>,
     pub activities: Vec<ActivityEntry>,
+    pub views_by_date: Vec<ViewsByDate>,
 }
 
 #[derive(Debug, Serialize)]
@@ -162,6 +165,19 @@ pub struct ActivityEntry {
     pub ip: Option<String>,
     pub device: Option<String>,
     pub browser: Option<String>,
+    pub os: Option<String>,
+    pub country: Option<String>,
+    pub city: Option<String>,
     pub referer: Option<String>,
+    pub referer_domain: Option<String>,
+    pub utm_source: Option<String>,
+    pub utm_medium: Option<String>,
+    pub utm_campaign: Option<String>,
     pub user_agent: Option<String>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct ViewsByDate {
+    pub date: String,
+    pub count: i64,
 }
