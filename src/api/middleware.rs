@@ -157,5 +157,10 @@ fn is_public_route(path: &str, method: &Method) -> bool {
         return true;
     }
 
+    // SPA routes (not API) — serve index.html
+    if !path.starts_with("/api/") {
+        return true;
+    }
+
     false
 }

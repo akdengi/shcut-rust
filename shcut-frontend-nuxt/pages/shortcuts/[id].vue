@@ -32,12 +32,12 @@
             </span>
           </div>
 
-          <!-- Short link -->
+          <!-- Short link with copy -->
           <div class="mt-2 flex items-center gap-2">
             <span class="text-sm font-mono text-indigo-600 dark:text-indigo-400">
               {{ serverUrl }}/s/{{ shortcut.name }}
             </span>
-            <button @click="copyLink" class="text-gray-400 hover:text-indigo-500 transition-colors" title="Copy">
+            <button @click="copyLink" class="p-1 rounded text-gray-400 hover:text-indigo-500 transition-colors" title="Copy link">
               <svg v-if="!copied" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
               </svg>
@@ -60,16 +60,10 @@
         </div>
 
         <div class="flex items-center gap-2 shrink-0">
-          <button
-            @click="showEditForm = true"
-            class="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-          >
+          <button @click="showEditForm = true" class="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
             Edit
           </button>
-          <button
-            @click="showDeleteConfirm = true"
-            class="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
-          >
+          <button @click="showDeleteConfirm = true" class="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors">
             Delete
           </button>
         </div>
@@ -77,11 +71,7 @@
 
       <!-- Tags -->
       <div v-if="shortcut.tags?.length" class="flex flex-wrap gap-2 mb-8">
-        <span
-          v-for="tag in shortcut.tags"
-          :key="tag"
-          class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400"
-        >
+        <span v-for="tag in shortcut.tags" :key="tag" class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400">
           {{ tag }}
         </span>
       </div>
@@ -106,8 +96,8 @@
         </div>
       </div>
 
-      <!-- Analytics tables -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <!-- Devices & Browsers -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
         <div v-if="analytics?.devices?.length" class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
           <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-3">Devices</h3>
           <div class="space-y-2">
@@ -127,15 +117,49 @@
             </div>
           </div>
         </div>
+      </div>
 
-        <div v-if="analytics?.references?.length" class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
-          <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-3">Referrers</h3>
-          <div class="space-y-2">
-            <div v-for="item in analytics.references" :key="item.name" class="flex items-center justify-between">
-              <span class="text-sm text-gray-600 dark:text-gray-400 truncate max-w-[200px]">{{ item.name }}</span>
-              <span class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ item.count }}</span>
-            </div>
-          </div>
+      <!-- Activity Log -->
+      <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div class="px-5 py-4 border-b border-gray-200 dark:border-gray-700">
+          <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Activity Log</h3>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+                <th class="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Time</th>
+                <th class="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">IP</th>
+                <th class="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Device</th>
+                <th class="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Browser</th>
+                <th class="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Referrer</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+              <tr v-for="activity in activities" :key="activity.id" class="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                <td class="px-4 py-3 text-gray-500 dark:text-gray-400 text-xs">
+                  {{ formatTime(activity.created_ts) }}
+                </td>
+                <td class="px-4 py-3 text-gray-500 dark:text-gray-400 text-xs font-mono">
+                  {{ activity.ip || '—' }}
+                </td>
+                <td class="px-4 py-3 text-gray-500 dark:text-gray-400 text-xs">
+                  {{ activity.device || '—' }}
+                </td>
+                <td class="px-4 py-3 text-gray-500 dark:text-gray-400 text-xs">
+                  {{ activity.browser || '—' }}
+                </td>
+                <td class="px-4 py-3 text-gray-500 dark:text-gray-400 text-xs truncate max-w-[200px]">
+                  {{ activity.referer || 'Direct' }}
+                </td>
+              </tr>
+              <tr v-if="!activities.length">
+                <td colspan="5" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400 text-sm">
+                  No activity yet
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </template>
@@ -175,6 +199,7 @@
 
 <script setup lang="ts">
 import { useShortcutsStore } from '~/stores/shortcuts'
+import { useAuthStore } from '~/stores/auth'
 import { useToast } from '~/composables/useToast'
 import type { ShortcutAnalytics } from '~/types/api'
 
@@ -183,12 +208,14 @@ definePageMeta({ middleware: 'auth' })
 const route = useRoute()
 const router = useRouter()
 const shortcutsStore = useShortcutsStore()
+const authStore = useAuthStore()
 const toast = useToast()
 
 const loading = ref(true)
 const showEditForm = ref(false)
 const showDeleteConfirm = ref(false)
 const analytics = ref<ShortcutAnalytics | null>(null)
+const activities = ref<any[]>([])
 const copied = ref(false)
 
 const serverUrl = computed(() => {
@@ -198,12 +225,19 @@ const serverUrl = computed(() => {
 
 const shortcut = computed(() => shortcutsStore.current)
 
+const formatTime = (ts: number) => {
+  return new Date(ts * 1000).toLocaleString()
+}
+
 onMounted(async () => {
   const id = Number(route.params.id)
   try {
     await shortcutsStore.fetchShortcut(id)
-    await shortcutsStore.fetchAnalytics(id)
-    analytics.value = shortcutsStore.analytics
+    const data = await $fetch<any>(`/api/v1/shortcuts/${id}/analytics`, {
+      headers: { Authorization: `Bearer ${authStore.token}` },
+    })
+    analytics.value = data
+    activities.value = data.activities || []
   } catch {
     toast.error('Failed to load shortcut')
     await navigateTo('/')
@@ -218,9 +252,19 @@ const copyLink = async () => {
   try {
     await navigator.clipboard.writeText(link)
     copied.value = true
+    toast.success('Link copied')
     setTimeout(() => { copied.value = false }, 2000)
   } catch {
     // fallback
+    const input = document.createElement('input')
+    input.value = link
+    document.body.appendChild(input)
+    input.select()
+    document.execCommand('copy')
+    document.body.removeChild(input)
+    copied.value = true
+    toast.success('Link copied')
+    setTimeout(() => { copied.value = false }, 2000)
   }
 }
 

@@ -5,7 +5,7 @@ use axum::{
 };
 
 use super::AppState;
-use crate::db::models::{Activity, ShortcutAnalytics, AnalyticsItem};
+use crate::db::models::{Activity, ShortcutAnalytics, AnalyticsItem, ActivityEntry};
 
 pub async fn shortcut_analytics(
     State(state): State<AppState>,
@@ -32,7 +32,7 @@ pub async fn shortcut_analytics(
     .await
     .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
-    // Aggregate data from payload JSON
+    // Aggregate data and build activity log
     let mut reference_map = std::collections::HashMap::new();
     let mut device_map = std::collections::HashMap::new();
     let mut browser_map = std::collections::HashMap::new();
@@ -40,19 +40,31 @@ pub async fn shortcut_analytics(
     let mut utm_source_map = std::collections::HashMap::new();
     let mut utm_medium_map = std::collections::HashMap::new();
     let mut utm_campaign_map = std::collections::HashMap::new();
+    let mut activity_log = Vec::new();
 
     for activity in &activities {
+        let mut ip = None;
+        let mut device = None;
+        let mut browser = None;
+        let mut referer = activity.referer.clone();
+
         if let Ok(payload) = serde_json::from_str::<serde_json::Value>(&activity.payload) {
-            if let Some(referer) = payload.get("referer").and_then(|v| v.as_str()) {
-                if referer != "direct" {
-                    *reference_map.entry(referer.to_string()).or_insert(0) += 1;
+            if let Some(r) = payload.get("referer").and_then(|v| v.as_str()) {
+                if r != "direct" {
+                    *reference_map.entry(r.to_string()).or_insert(0) += 1;
+                    referer = Some(r.to_string());
                 }
             }
-            if let Some(device) = payload.get("device").and_then(|v| v.as_str()) {
-                *device_map.entry(device.to_string()).or_insert(0) += 1;
+            if let Some(d) = payload.get("device").and_then(|v| v.as_str()) {
+                *device_map.entry(d.to_string()).or_insert(0) += 1;
+                device = Some(d.to_string());
             }
-            if let Some(browser) = payload.get("browser").and_then(|v| v.as_str()) {
-                *browser_map.entry(browser.to_string()).or_insert(0) += 1;
+            if let Some(b) = payload.get("browser").and_then(|v| v.as_str()) {
+                *browser_map.entry(b.to_string()).or_insert(0) += 1;
+                browser = Some(b.to_string());
+            }
+            if let Some(i) = payload.get("ip").and_then(|v| v.as_str()) {
+                ip = Some(i.to_string());
             }
         }
 
@@ -76,6 +88,16 @@ pub async fn shortcut_analytics(
                 *utm_campaign_map.entry(campaign.clone()).or_insert(0) += 1;
             }
         }
+
+        activity_log.push(ActivityEntry {
+            id: activity.id,
+            created_ts: activity.created_ts,
+            ip,
+            device,
+            browser,
+            referer,
+            user_agent: activity.user_agent.clone(),
+        });
     }
 
     Ok(Json(ShortcutAnalytics {
@@ -87,6 +109,7 @@ pub async fn shortcut_analytics(
         utm_sources: map_to_analytics(utm_source_map),
         utm_mediums: map_to_analytics(utm_medium_map),
         utm_campaigns: map_to_analytics(utm_campaign_map),
+        activities: activity_log,
     }))
 }
 

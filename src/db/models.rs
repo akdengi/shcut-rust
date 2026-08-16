@@ -146,10 +146,22 @@ pub struct ShortcutAnalytics {
     pub utm_sources: Vec<AnalyticsItem>,
     pub utm_mediums: Vec<AnalyticsItem>,
     pub utm_campaigns: Vec<AnalyticsItem>,
+    pub activities: Vec<ActivityEntry>,
 }
 
 #[derive(Debug, Serialize)]
 pub struct AnalyticsItem {
     pub name: String,
     pub count: i64,
+}
+
+#[derive(Debug, Serialize)]
+pub struct ActivityEntry {
+    pub id: i64,
+    pub created_ts: i64,
+    pub ip: Option<String>,
+    pub device: Option<String>,
+    pub browser: Option<String>,
+    pub referer: Option<String>,
+    pub user_agent: Option<String>,
 }
