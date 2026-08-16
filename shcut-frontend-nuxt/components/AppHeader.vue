@@ -15,19 +15,6 @@
           <span class="text-xl font-bold text-gray-900 dark:text-white">{{ settings.company_name }}</span>
         </NuxtLink>
 
-        <!-- Desktop Nav -->
-        <nav class="hidden md:flex items-center gap-1">
-          <NuxtLink
-            to="/shortcuts"
-            class="px-3 py-2 rounded-md text-sm font-medium transition-colors
-                   text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800
-                   hover:text-gray-900 dark:hover:text-white"
-            active-class="!bg-indigo-50 !text-indigo-700 dark:!bg-indigo-900/30 dark:!text-indigo-400"
-          >
-            Shortcuts
-          </NuxtLink>
-        </nav>
-
         <!-- Right side -->
         <div class="flex items-center gap-3">
           <!-- Dark mode toggle -->
@@ -125,25 +112,7 @@
               Sign up
             </NuxtLink>
           </template>
-
-          <!-- Mobile menu button -->
-          <button
-            @click="showMobileNav = !showMobileNav"
-            class="md:hidden p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
-          >
-            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path v-if="!showMobileNav" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-              <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
         </div>
-      </div>
-
-      <!-- Mobile Nav -->
-      <div v-if="showMobileNav" class="md:hidden py-3 border-t border-gray-100 dark:border-gray-800">
-        <NuxtLink to="/shortcuts" class="block px-3 py-2 rounded-md text-base font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800" @click="showMobileNav = false">
-          Shortcuts
-        </NuxtLink>
       </div>
     </div>
   </header>
@@ -166,7 +135,6 @@ const toggleDark = () => {
 }
 
 const showMenu = ref(false)
-const showMobileNav = ref(false)
 const menuRef = ref<HTMLElement | null>(null)
 
 const handleClickOutside = (e: MouseEvent) => {

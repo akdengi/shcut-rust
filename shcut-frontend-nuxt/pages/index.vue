@@ -1,16 +1,8 @@
 <template>
   <div>
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <!-- Stats -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
-        <StatsCard label="Total Shortcuts" :value="shortcutsStore.total" icon="link" />
-        <StatsCard label="Total Views" :value="totalViews" icon="eye" />
-      </div>
-
       <!-- Toolbar -->
       <div class="flex items-center justify-between mb-6 gap-4 flex-wrap">
-        <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Recent Shortcuts</h2>
-
         <div class="flex items-center gap-3">
           <!-- Tag filter -->
           <select
@@ -25,13 +17,14 @@
           <!-- Per page selector -->
           <select
             v-model="perPage"
-            @change="handlePerPageChange"
+            @change="handleFilterChange"
             class="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-1 focus:ring-indigo-500"
           >
-            <option :value="10">10 per page</option>
-            <option :value="20">20 per page</option>
-            <option :value="50">50 per page</option>
-            <option :value="100">100 per page</option>
+            <option :value="0">All</option>
+            <option :value="10">10</option>
+            <option :value="20">20</option>
+            <option :value="50">50</option>
+            <option :value="100">100</option>
           </select>
 
           <!-- View toggle -->
@@ -44,7 +37,7 @@
                   ? 'bg-indigo-600 text-white'
                   : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
               ]"
-              title="Card view"
+              title="Cards"
             >
               <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
@@ -58,25 +51,25 @@
                   ? 'bg-indigo-600 text-white'
                   : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
               ]"
-              title="Table view"
+              title="Table"
             >
               <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
               </svg>
             </button>
           </div>
-
-          <!-- New Shortcut button -->
-          <button
-            @click="showCreateDrawer = true"
-            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-          >
-            <svg class="-ml-1 mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-            </svg>
-            New
-          </button>
         </div>
+
+        <!-- New Shortcut button -->
+        <button
+          @click="showCreateDrawer = true"
+          class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+        >
+          <svg class="-ml-1 mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+          New Shortcut
+        </button>
       </div>
 
       <!-- Loading -->
@@ -85,7 +78,7 @@
       <!-- Empty state -->
       <EmptyState
         v-else-if="shortcutsStore.items.length === 0"
-        title="No shortcuts yet"
+        title="No shortcuts"
         description="Create your first shortcut to get started."
         action-text="Create Shortcut"
         @action="showCreateDrawer = true"
@@ -111,10 +104,8 @@
                 <th class="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">ID</th>
                 <th class="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Name</th>
                 <th class="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Target URL</th>
-                <th class="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Title</th>
                 <th class="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Tags</th>
                 <th class="px-4 py-3 text-center font-medium text-gray-500 dark:text-gray-400">Views</th>
-                <th class="px-4 py-3 text-center font-medium text-gray-500 dark:text-gray-400">Visibility</th>
                 <th class="px-4 py-3 text-right font-medium text-gray-500 dark:text-gray-400">Actions</th>
               </tr>
             </thead>
@@ -131,7 +122,6 @@
                   </NuxtLink>
                 </td>
                 <td class="px-4 py-3 text-gray-500 dark:text-gray-400 max-w-xs truncate">{{ shortcut.link }}</td>
-                <td class="px-4 py-3 text-gray-700 dark:text-gray-300 max-w-xs truncate">{{ shortcut.title || '—' }}</td>
                 <td class="px-4 py-3">
                   <div class="flex flex-wrap gap-1">
                     <span
@@ -145,15 +135,6 @@
                   </div>
                 </td>
                 <td class="px-4 py-3 text-center text-gray-500 dark:text-gray-400">{{ shortcut.view_count }}</td>
-                <td class="px-4 py-3 text-center">
-                  <span
-                    v-if="shortcut.visibility === 'public'"
-                    class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400"
-                  >
-                    Public
-                  </span>
-                  <span v-else class="text-gray-400 dark:text-gray-500 text-xs">Private</span>
-                </td>
                 <td class="px-4 py-3 text-right">
                   <div class="flex items-center justify-end gap-1">
                     <button
@@ -183,9 +164,9 @@
       </div>
 
       <!-- Pagination -->
-      <div v-if="shortcutsStore.totalPages > 1" class="mt-6 flex items-center justify-between">
+      <div v-if="perPage > 0 && shortcutsStore.totalPages > 1" class="mt-6 flex items-center justify-between">
         <p class="text-sm text-gray-500 dark:text-gray-400">
-          Showing {{ (shortcutsStore.page - 1) * shortcutsStore.perPage + 1 }}–{{ Math.min(shortcutsStore.page * shortcutsStore.perPage, shortcutsStore.total) }} of {{ shortcutsStore.total }}
+          {{ shortcutsStore.total }} shortcuts
         </p>
         <nav class="flex items-center gap-2">
           <button
@@ -196,7 +177,7 @@
             Previous
           </button>
           <span class="text-sm text-gray-600 dark:text-gray-400">
-            Page {{ shortcutsStore.page }} of {{ shortcutsStore.totalPages }}
+            {{ shortcutsStore.page }} / {{ shortcutsStore.totalPages }}
           </span>
           <button
             @click="changePage(shortcutsStore.page + 1)"
@@ -250,19 +231,15 @@ const shortcutsStore = useShortcutsStore()
 const { success } = useToast()
 
 const viewMode = ref<'cards' | 'table'>('cards')
-const perPage = ref(20)
+const perPage = ref(0)
 const tagFilter = ref('')
 const availableTags = ref<string[]>([])
 const showCreateDrawer = ref(false)
 const editingShortcut = ref<ShortcutWithTags | null>(null)
 const deletingShortcut = ref<ShortcutWithTags | null>(null)
 
-const totalViews = computed(() =>
-  shortcutsStore.items.reduce((sum, s) => sum + s.view_count, 0)
-)
-
 const loadShortcuts = () => {
-  const params: any = { per_page: perPage.value }
+  const params: any = { per_page: perPage.value || 9999 }
   if (tagFilter.value) params.tag = tagFilter.value
   shortcutsStore.fetchShortcuts(params)
 }
@@ -284,19 +261,13 @@ onMounted(async () => {
 })
 
 const changePage = (page: number) => {
-  const params: any = { page, per_page: perPage.value }
-  if (tagFilter.value) params.tag = tagFilter.value
-  shortcutsStore.fetchShortcuts(params)
-}
-
-const handlePerPageChange = () => {
-  const params: any = { page: 1, per_page: perPage.value }
+  const params: any = { page, per_page: perPage.value || 9999 }
   if (tagFilter.value) params.tag = tagFilter.value
   shortcutsStore.fetchShortcuts(params)
 }
 
 const handleFilterChange = () => {
-  const params: any = { page: 1, per_page: perPage.value }
+  const params: any = { page: 1, per_page: perPage.value || 9999 }
   if (tagFilter.value) params.tag = tagFilter.value
   shortcutsStore.fetchShortcuts(params)
 }
@@ -333,7 +304,7 @@ const handleShortcutSubmit = async (payload: ShortcutCreatePayload) => {
     }
     closeDrawer()
     loadShortcuts()
-    loadTags() // refresh tags list
+    loadTags()
   } catch (e: any) {
     // error shown in console
   }
