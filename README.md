@@ -32,8 +32,9 @@ chmod +x deploy.sh
 
 ## Documentation
 
-- [API Reference](docs/api.md)
-- [Deployment Guide](docs/deployment.md)
+- [User Guide](docs/guide.md) — how to use the application
+- [API Reference](docs/api.md) — endpoints, roles, parameters
+- [Deployment Guide](docs/deployment.md) — setup, migration, backup
 
 ## Roles
 
