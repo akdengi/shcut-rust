@@ -38,7 +38,7 @@ pub async fn shortcut_analytics(
     .await
     .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
-    // Aggregate references
+    // Aggregate data from payload JSON
     let mut reference_map = std::collections::HashMap::new();
     let mut device_map = std::collections::HashMap::new();
     let mut browser_map = std::collections::HashMap::new();
@@ -48,31 +48,45 @@ pub async fn shortcut_analytics(
     let mut utm_campaign_map = std::collections::HashMap::new();
 
     for activity in &activities {
-        // Parse payload for referer and user agent
         if let Ok(payload) = serde_json::from_str::<serde_json::Value>(&activity.payload) {
-            if let Some(ref referer) = payload.get("referer").and_then(|v| v.as_str()) {
-                *reference_map.entry(referer.to_string()).or_insert(0) += 1;
+            // Referer
+            if let Some(referer) = payload.get("referer").and_then(|v| v.as_str()) {
+                if referer != "direct" {
+                    *reference_map.entry(referer.to_string()).or_insert(0) += 1;
+                }
             }
-            if let Some(ref user_agent) = payload.get("user_agent").and_then(|v| v.as_str()) {
-                *device_map.entry(user_agent.to_string()).or_insert(0) += 1;
+
+            // Device type (Desktop/Mobile/Tablet)
+            if let Some(device) = payload.get("device").and_then(|v| v.as_str()) {
+                *device_map.entry(device.to_string()).or_insert(0) += 1;
             }
-            if let Some(ref browser) = payload.get("browser").and_then(|v| v.as_str()) {
+
+            // Browser
+            if let Some(browser) = payload.get("browser").and_then(|v| v.as_str()) {
                 *browser_map.entry(browser.to_string()).or_insert(0) += 1;
             }
         }
 
-        // Use structured fields
+        // Structured fields for country/UTM (future use)
         if let Some(ref country) = activity.ip_country {
-            *country_map.entry(country.clone()).or_insert(0) += 1;
+            if !country.is_empty() {
+                *country_map.entry(country.clone()).or_insert(0) += 1;
+            }
         }
         if let Some(ref source) = activity.utm_source {
-            *utm_source_map.entry(source.clone()).or_insert(0) += 1;
+            if !source.is_empty() {
+                *utm_source_map.entry(source.clone()).or_insert(0) += 1;
+            }
         }
         if let Some(ref medium) = activity.utm_medium {
-            *utm_medium_map.entry(medium.clone()).or_insert(0) += 1;
+            if !medium.is_empty() {
+                *utm_medium_map.entry(medium.clone()).or_insert(0) += 1;
+            }
         }
         if let Some(ref campaign) = activity.utm_campaign {
-            *utm_campaign_map.entry(campaign.clone()).or_insert(0) += 1;
+            if !campaign.is_empty() {
+                *utm_campaign_map.entry(campaign.clone()).or_insert(0) += 1;
+            }
         }
     }
 

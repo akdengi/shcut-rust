@@ -1,10 +1,11 @@
 use axum::{
-    extract::{Path, Query, State},
-    http::StatusCode,
+    extract::{ConnectInfo, Path, Query, Request, State},
+    http::{HeaderMap, StatusCode},
     Json,
 };
 use chrono::Utc;
 use serde::Deserialize;
+use std::net::SocketAddr;
 
 use super::{AppState, auth_extractor::AuthClaims};
 use crate::db::models::{CreateShortcut, PaginatedResponse, Shortcut, ShortcutWithTags, UpdateShortcut};
@@ -334,6 +335,8 @@ pub async fn delete(
 pub async fn redirect(
     State(state): State<AppState>,
     Path(name): Path<String>,
+    headers: HeaderMap,
+    ConnectInfo(addr): ConnectInfo<SocketAddr>,
 ) -> Result<axum::response::Redirect, StatusCode> {
     let shortcut = sqlx::query_as::<_, Shortcut>("SELECT * FROM shortcuts WHERE name = ?")
         .bind(&name)
@@ -350,10 +353,78 @@ pub async fn redirect(
                 .await
                 .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
+            // Collect analytics data
+            let user_agent = headers
+                .get("user-agent")
+                .and_then(|v| v.to_str().ok())
+                .unwrap_or("unknown");
+            let referer = headers
+                .get("referer")
+                .and_then(|v| v.to_str().ok())
+                .unwrap_or("direct");
+
+            let (device, browser) = parse_user_agent(user_agent);
+            let ip = addr.ip().to_string();
+
+            // Parse UTM parameters from the original request URI
+            // (not available here, but we store what we have)
+
+            // Create activity record
+            let now = Utc::now().timestamp();
+            let payload = serde_json::json!({
+                "referer": referer,
+                "user_agent": user_agent,
+                "device": device,
+                "browser": browser,
+                "ip": ip,
+            });
+
+            let _ = sqlx::query(
+                "INSERT INTO activities (creator_id, created_ts, type, level, payload, shortcut_id, referer, user_agent) VALUES (?, ?, 'shortcut.view', 'info', ?, ?, ?, ?)"
+            )
+            .bind(s.creator_id)
+            .bind(now)
+            .bind(payload.to_string())
+            .bind(s.id)
+            .bind(referer)
+            .bind(user_agent)
+            .execute(&state.db)
+            .await;
+
             Ok(axum::response::Redirect::temporary(&s.link))
         }
         None => Err(StatusCode::NOT_FOUND),
     }
+}
+
+fn parse_user_agent(ua: &str) -> (String, String) {
+    let ua_lower = ua.to_lowercase();
+
+    // Detect device type
+    let device = if ua_lower.contains("mobile") || ua_lower.contains("android") || ua_lower.contains("iphone") {
+        "Mobile"
+    } else if ua_lower.contains("tablet") || ua_lower.contains("ipad") {
+        "Tablet"
+    } else {
+        "Desktop"
+    };
+
+    // Detect browser
+    let browser = if ua_lower.contains("firefox/") {
+        "Firefox"
+    } else if ua_lower.contains("edg/") || ua_lower.contains("edge/") {
+        "Edge"
+    } else if ua_lower.contains("chrome/") && !ua_lower.contains("chromium") {
+        "Chrome"
+    } else if ua_lower.contains("safari/") && !ua_lower.contains("chrome") {
+        "Safari"
+    } else if ua_lower.contains("opera/") || ua_lower.contains("opr/") {
+        "Opera"
+    } else {
+        "Other"
+    };
+
+    (device.to_string(), browser.to_string())
 }
 
 // Helper functions
