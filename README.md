@@ -4,7 +4,7 @@ Self-hosted URL shortener built with Rust and Nuxt 3.
 
 ## Features
 
-- **Short URLs** — create custom short links with `/name` redirects
+- **Short URLs** — create custom short links with `/s/name` redirects
 - **Tags** — organize shortcuts with tags, filter by tag
 - **Analytics** — track views, devices, browsers, referrers
 - **Workspace settings** — custom company name and logo upload
@@ -71,7 +71,7 @@ Access at `http://your-server:5231`
 | `DELETE` | `/api/v1/shortcuts/:id` | Delete shortcut (owner/admin) |
 | `GET` | `/api/v1/shortcuts/by-name/:name` | Get shortcut by name |
 | `GET` | `/api/v1/shortcuts/:id/analytics` | Get shortcut analytics |
-| `GET` | `/s/:name` | Redirect to target URL (public) |
+| `GET` | `/s/:name` | Redirect to target URL (public, records analytics) |
 
 **Query params for list:** `page`, `per_page`, `tag`, `search`, `visibility`, `creator_id`
 
@@ -79,15 +79,16 @@ Access at `http://your-server:5231`
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| `GET` | `/api/v1/tags` | List all tags |
+| `GET` | `/api/v1/tags` | List all tags (public) |
+| `GET` | `/api/v1/tags/:name/shortcuts` | Get all shortcuts with tag (public) |
 
 ### Settings
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | `GET` | `/api/v1/settings` | Get workspace settings (public) |
-| `PUT` | `/api/v1/settings` | Update settings (admin) |
-| `POST` | `/api/v1/settings/logo` | Upload logo file (admin, multipart) |
+| `PUT` | `/api/v1/settings` | Update settings (admin, auth required) |
+| `POST` | `/api/v1/settings/logo` | Upload logo file (admin, multipart, max 2MB) |
 
 ### Users
 
@@ -95,6 +96,12 @@ Access at `http://your-server:5231`
 |--------|----------|-------------|
 | `GET` | `/api/v1/users` | List users (admin) |
 | `PUT` | `/api/v1/users/:id` | Update user (self/admin) |
+
+### Health
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/healthz` | Health check |
 
 ## Development
 
@@ -118,8 +125,8 @@ npm run dev
 # First time
 ./deploy.sh
 
-# Rebuild without cache
-./rebuild.sh
+# Update and rebuild
+git pull && ./rebuild.sh
 ```
 
 ## License
