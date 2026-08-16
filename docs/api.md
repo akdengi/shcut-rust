@@ -38,9 +38,16 @@ New users default to `view` role.
 | DELETE | `/api/v1/shortcuts/:id` | Yes | admin | Delete |
 | GET | `/api/v1/shortcuts/by-name/:name` | No | — | Get by name |
 | GET | `/api/v1/shortcuts/:id/analytics` | Yes | any | Analytics + activity log |
+| DELETE | `/api/v1/shortcuts/:id/analytics` | Yes | admin | Reset analytics for this shortcut |
 | GET | `/s/:name` | No | — | Redirect (records analytics) |
 
-**Query params:** `page`, `per_page`, `tag`, `search`, `visibility`, `creator_id`
+**List query params:** `page`, `per_page`, `tag`, `search`, `visibility`, `creator_id`
+
+**Analytics query params:**
+| Param | Type | Description |
+|-------|------|-------------|
+| `from` | int | Unix timestamp, start of period |
+| `to` | int | Unix timestamp, end of period |
 
 ---
 
@@ -48,7 +55,7 @@ New users default to `view` role.
 
 | Method | Endpoint | Auth | Role | Description |
 |--------|----------|------|------|-------------|
-| GET | `/api/v1/tags` | No | — | List all tags |
+| GET | `/api/v1/tags` | No | — | List all tags with shortcut count |
 | POST | `/api/v1/tags` | Yes | admin | Create tag |
 | PUT | `/api/v1/tags/:id` | Yes | admin | Rename tag |
 | DELETE | `/api/v1/tags/:id` | Yes | admin | Delete tag (removes from shortcuts) |

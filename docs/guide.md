@@ -29,6 +29,75 @@ Your shortcut is available at `http://your-server:5231/s/<name>`
 
 ---
 
+## Using UTM Parameters
+
+UTM (Urchin Tracking Module) parameters help track where your traffic comes from. Add them to your short link URL.
+
+### Format
+
+```
+http://your-server:5231/s/<name>?utm_source=<source>&utm_medium=<medium>&utm_campaign=<campaign>
+```
+
+### Parameters
+
+| Parameter | Description | Example |
+|-----------|-------------|---------|
+| `utm_source` | Traffic source | `telegram`, `twitter`, `email`, `google` |
+| `utm_medium` | Marketing medium | `post`, `banner`, `newsletter`, `cpc` |
+| `utm_campaign` | Campaign name | `spring_sale`, `product_launch`, `weekly_digest` |
+
+### Examples
+
+**Telegram post:**
+```
+http://your-server:5231/s/my-product?utm_source=telegram&utm_medium=post&utm_campaign=spring2025
+```
+
+**Email newsletter:**
+```
+http://your-server:5231/s/my-product?utm_source=email&utm_medium=newsletter&utm_campaign=weekly
+```
+
+**Twitter ad:**
+```
+http://your-server:5231/s/my-product?utm_source=twitter&utm_medium=cpc&utm_campaign=awareness
+```
+
+### Where to see UTM data
+
+Go to shortcut → Stats → UTM Sources section shows aggregated data.
+
+---
+
+## Understanding Analytics
+
+### What each metric means
+
+| Metric | What it tracks | How it's collected |
+|--------|---------------|-------------------|
+| **Devices** | Desktop, Mobile, Tablet | From User-Agent header (always works) |
+| **Browsers** | Chrome, Firefox, Safari, Edge | From User-Agent header (always works) |
+| **OS** | Windows, macOS, Linux, Android, iOS | From User-Agent header (always works) |
+| **Countries** | Visitor's country | From IP address via ip-api.com (requires geolocation enabled) |
+| **Referrers** | Website visitor came from | From Referer header (requires referrer tracking enabled) |
+| **UTM** | Marketing campaign tags | From URL parameters (requires UTM tracking enabled) |
+
+### Why Referrers shows 0
+
+Referrers only appear when someone clicks a link to your short URL from another website:
+- Clicking a link on Twitter → referrer = `twitter.com`
+- Clicking a link in email → referrer = email client
+- Typing URL directly in browser → referrer = "Direct" (not counted)
+
+To test referrers: create a link to your short URL on any webpage and click it.
+
+### Why Countries shows 0
+
+Countries require geolocation to be enabled in Settings → Analytics Settings. When disabled, country data is not collected.
+
+---
+
 ## Managing Shortcuts
 
 ### Edit
@@ -43,6 +112,7 @@ Your shortcut is available at `http://your-server:5231/s/<name>`
 ### View Stats
 
 - Click the chart icon → opens analytics page with:
+  - Date range filter (from/to)
   - Total views, devices, browsers, OS, countries
   - Referrers and UTM parameters
   - Views by date chart
@@ -67,26 +137,16 @@ Go to **Settings → Tag Management**:
 
 ---
 
-## Analytics
-
-### Viewing Analytics
-
-Click the stats icon on any shortcut to see:
-- **Devices** — Desktop, Mobile, Tablet
-- **Browsers** — Chrome, Firefox, Safari, Edge
-- **OS** — Windows, macOS, Linux, Android, iOS
-- **Countries** — detected from IP address
-- **Referrers** — where visitors come from
-- **UTM** — marketing campaign tracking
-- **Activity Log** — detailed per-visit data
-
-### Configuring Analytics (admin only)
+## Analytics Settings (admin only)
 
 Go to **Settings → Analytics Settings**:
-- **Analytics** — master on/off toggle
-- **Geolocation** — country/city from IP (adds ~100ms)
-- **UTM Parameters** — track marketing tags
-- **Referrer Tracking** — track traffic sources
+
+| Setting | Description | Default |
+|---------|-------------|---------|
+| **Analytics** | Master on/off toggle | On |
+| **Geolocation** | Detect country from IP (adds ~100ms latency) | On |
+| **UTM Parameters** | Track utm_source/medium/campaign from URLs | On |
+| **Referrer Tracking** | Track which website visitor came from | On |
 
 > Disabling geolocation speeds up redirects.
 
@@ -122,3 +182,5 @@ Go to **Settings → Workspace Settings**:
 - **Tag filter:** click any tag badge to filter shortcuts by that tag
 - **Dark mode:** click the sun/moon icon in the header
 - **Pagination:** choose "All" in the dropdown to show all shortcuts, or select a number for paginated view
+- **Analytics period:** use date range filter on stats page to analyze specific time periods
+- **Reset analytics:** admin can reset all analytics data for a shortcut from the stats page
