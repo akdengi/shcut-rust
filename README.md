@@ -5,8 +5,8 @@ Self-hosted URL shortener built with Rust and Nuxt 3.
 ## Features
 
 - **Short URLs** — create custom short links with `/s/name` redirects
-- **Tags** — organize shortcuts with tags, filter by tag
-- **Analytics** — track views, devices, browsers, referrers
+- **Tags** — organize shortcuts with tags, filter by tag, manage tags in settings
+- **Analytics** — track views, devices, browsers, referrers, activity log
 - **Workspace settings** — custom company name and logo upload
 - **JWT auth** — secure authentication with admin/user roles
 - **Admin seeding** — create admin user from environment variables
@@ -70,7 +70,7 @@ Access at `http://your-server:5231`
 | `PUT` | `/api/v1/shortcuts/:id` | Update shortcut (owner/admin) |
 | `DELETE` | `/api/v1/shortcuts/:id` | Delete shortcut (owner/admin) |
 | `GET` | `/api/v1/shortcuts/by-name/:name` | Get shortcut by name |
-| `GET` | `/api/v1/shortcuts/:id/analytics` | Get shortcut analytics |
+| `GET` | `/api/v1/shortcuts/:id/analytics` | Get shortcut analytics with activity log |
 | `GET` | `/s/:name` | Redirect to target URL (public, records analytics) |
 
 **Query params for list:** `page`, `per_page`, `tag`, `search`, `visibility`, `creator_id`
@@ -80,6 +80,9 @@ Access at `http://your-server:5231`
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | `GET` | `/api/v1/tags` | List all tags (public) |
+| `POST` | `/api/v1/tags` | Create tag (admin, auth required) |
+| `PUT` | `/api/v1/tags/:id` | Rename tag (admin, auth required) |
+| `DELETE` | `/api/v1/tags/:id` | Delete tag (admin, removes from all shortcuts) |
 | `GET` | `/api/v1/tags/:name/shortcuts` | Get all shortcuts with tag (public) |
 
 ### Settings
@@ -96,6 +99,7 @@ Access at `http://your-server:5231`
 |--------|----------|-------------|
 | `GET` | `/api/v1/users` | List users (admin) |
 | `PUT` | `/api/v1/users/:id` | Update user (self/admin) |
+| `DELETE` | `/api/v1/users/:id` | Delete user (admin, cannot delete self) |
 
 ### Health
 

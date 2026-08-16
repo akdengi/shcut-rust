@@ -34,10 +34,6 @@ Register a new user. First user automatically becomes admin. Only works when `AL
 }
 ```
 
-**Errors:**
-- `403` — Registration disabled
-- `409` — Email already exists
-
 ---
 
 ### POST /api/v1/auth/login
@@ -59,9 +55,6 @@ Login with email/password.
   "user": { ... }
 }
 ```
-
-**Errors:**
-- `401` — Invalid credentials
 
 ---
 
@@ -157,9 +150,6 @@ Create a new shortcut.
 
 **Response (200):** Created shortcut object with tags.
 
-**Errors:**
-- `409` — Shortcut name already exists
-
 ---
 
 ### GET /api/v1/shortcuts/:id
@@ -202,7 +192,7 @@ Get shortcut by name (public, no auth required).
 
 ### GET /api/v1/shortcuts/:id/analytics
 
-Get analytics for a shortcut.
+Get analytics for a shortcut with activity log.
 
 **Headers:** `Authorization: Bearer <token>`
 
@@ -224,7 +214,18 @@ Get analytics for a shortcut.
   "countries": [],
   "utm_sources": [],
   "utm_mediums": [],
-  "utm_campaigns": []
+  "utm_campaigns": [],
+  "activities": [
+    {
+      "id": 1,
+      "created_ts": 1691654400,
+      "ip": "192.168.1.1",
+      "device": "Desktop",
+      "browser": "Chrome",
+      "referer": "https://twitter.com",
+      "user_agent": "Mozilla/5.0..."
+    }
+  ]
 }
 ```
 
@@ -234,7 +235,7 @@ Get analytics for a shortcut.
 
 ### GET /api/v1/tags
 
-List all unique tags.
+List all unique tags (public).
 
 **Response (200):**
 ```json
@@ -246,31 +247,55 @@ List all unique tags.
 
 ---
 
+### POST /api/v1/tags
+
+Create a new tag (admin only).
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Request:**
+```json
+{
+  "name": "new-tag"
+}
+```
+
+**Response (200):** Created tag object.
+
+---
+
+### PUT /api/v1/tags/:id
+
+Rename a tag (admin only). Updates the tag name for all shortcuts using it.
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Request:**
+```json
+{
+  "name": "new-name"
+}
+```
+
+**Response (200):** Updated tag object.
+
+---
+
+### DELETE /api/v1/tags/:id
+
+Delete a tag (admin only). Removes the tag from all shortcuts.
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Response:** `204 No Content`
+
+---
+
 ### GET /api/v1/tags/:name/shortcuts
 
-Get all shortcuts with a specific tag. Returns full shortcut objects.
+Get all shortcuts with a specific tag (public). Returns full shortcut objects.
 
-**Response (200):**
-```json
-[
-  {
-    "id": 1,
-    "creator_id": 1,
-    "name": "google",
-    "link": "https://google.com",
-    "title": "Google",
-    "description": "Search engine",
-    "visibility": "public",
-    "view_count": 42,
-    "tags": ["search", "web"],
-    "og_title": "",
-    "og_description": "",
-    "og_image": "",
-    "created_ts": 1691654400,
-    "updated_ts": 1691654400
-  }
-]
-```
+**Response (200):** Array of shortcut objects with tags.
 
 ---
 
@@ -292,7 +317,7 @@ Get workspace settings (public, no auth required).
 
 ### PUT /api/v1/settings
 
-Update workspace settings (admin only).
+Update workspace settings (admin, auth required).
 
 **Headers:** `Authorization: Bearer <token>`
 
@@ -309,7 +334,7 @@ Update workspace settings (admin only).
 
 ### POST /api/v1/settings/logo
 
-Upload logo file (admin only).
+Upload logo file (admin, auth required).
 
 **Headers:** `Authorization: Bearer <token>`, `Content-Type: multipart/form-data`
 
@@ -356,11 +381,21 @@ Update user. Users can update themselves; admins can update anyone.
 
 ---
 
+### DELETE /api/v1/users/:id
+
+Delete user (admin only). Cannot delete yourself.
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Response:** `204 No Content`
+
+---
+
 ## Public Endpoints
 
 ### GET /s/:name
 
-Redirect to shortcut's target URL. Increments view count and records analytics (device, browser, referrer).
+Redirect to shortcut's target URL. Increments view count and records analytics (device, browser, referrer, IP).
 
 **Response:** `307 Temporary Redirect`
 
@@ -394,6 +429,6 @@ Health check.
 | 401 | Unauthorized (missing/invalid token) |
 | 403 | Forbidden (not owner/admin or registration disabled) |
 | 404 | Not found |
-| 409 | Conflict (duplicate name/email) |
+| 409 | Conflict (duplicate name/email/tag) |
 | 413 | Payload too large (file > 2MB) |
 | 500 | Internal server error |
