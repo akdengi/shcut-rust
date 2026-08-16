@@ -92,6 +92,7 @@
           :shortcut="shortcut"
           @edit="editShortcut"
           @delete="confirmDelete"
+          @stats="openStats"
           @filter-tag="handleTagClick"
         />
       </div>
@@ -123,13 +124,24 @@
                   /{{ shortcut.name }}
                 </td>
                 <td class="px-4 py-3">
-                  <a
-                    :href="`/s/${shortcut.name}`"
-                    target="_blank"
-                    class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline font-mono"
-                  >
-                    /s/{{ shortcut.name }}
-                  </a>
+                  <div class="flex items-center gap-1">
+                    <a
+                      :href="`/s/${shortcut.name}`"
+                      target="_blank"
+                      class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline font-mono"
+                    >
+                      /s/{{ shortcut.name }}
+                    </a>
+                    <button
+                      @click="copyShortcutLink(shortcut.name)"
+                      class="text-gray-400 hover:text-indigo-500 transition-colors"
+                      title="Copy link"
+                    >
+                      <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                      </svg>
+                    </button>
+                  </div>
                 </td>
                 <td class="px-4 py-3 text-gray-500 dark:text-gray-400 max-w-xs truncate">{{ shortcut.link }}</td>
                 <td class="px-4 py-3">
@@ -156,6 +168,15 @@
                 </td>
                 <td class="px-4 py-3 text-right">
                   <div class="flex items-center justify-end gap-1">
+                    <button
+                      @click="openStats(shortcut)"
+                      class="p-1.5 rounded-lg text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                      title="Stats"
+                    >
+                      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                      </svg>
+                    </button>
                     <button
                       @click="editShortcut(shortcut)"
                       class="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
@@ -294,6 +315,27 @@ const handleFilterChange = () => {
 const handleTagClick = (tag: string) => {
   tagFilter.value = tag
   handleFilterChange()
+}
+
+const openStats = (shortcut: ShortcutWithTags) => {
+  navigateTo(`/shortcuts/${shortcut.id}`)
+}
+
+const copyShortcutLink = async (name: string) => {
+  const link = `${window.location.origin}/s/${name}`
+  try {
+    await navigator.clipboard.writeText(link)
+    success('Link copied')
+  } catch {
+    // fallback
+    const input = document.createElement('input')
+    input.value = link
+    document.body.appendChild(input)
+    input.select()
+    document.execCommand('copy')
+    document.body.removeChild(input)
+    success('Link copied')
+  }
 }
 
 const editShortcut = (shortcut: ShortcutWithTags) => {

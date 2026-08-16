@@ -2,28 +2,41 @@
   <div class="group bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 hover:shadow-md hover:border-indigo-200 dark:hover:border-indigo-800 transition-all duration-200">
     <div class="flex items-start justify-between gap-3">
       <div class="min-w-0 flex-1">
-        <!-- Name & short link -->
+        <!-- Name -->
         <div class="flex items-center gap-2">
           <span class="text-lg font-semibold text-indigo-600 dark:text-indigo-400 truncate">
             /{{ shortcut.name }}
           </span>
-          <a
-            :href="`/s/${shortcut.name}`"
-            target="_blank"
+          <!-- Stats button -->
+          <button
+            @click="$emit('stats', shortcut)"
             class="opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-indigo-500"
-            title="Open short link"
-            @click.stop
+            title="View stats"
           >
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
             </svg>
-          </a>
+          </button>
         </div>
 
-        <!-- Short link -->
-        <p class="mt-0.5 text-xs text-gray-400 dark:text-gray-500 font-mono">
-          {{ serverUrl }}/s/{{ shortcut.name }}
-        </p>
+        <!-- Short link with copy -->
+        <div class="mt-0.5 flex items-center gap-1.5">
+          <span class="text-xs text-gray-400 dark:text-gray-500 font-mono">
+            {{ serverUrl }}/s/{{ shortcut.name }}
+          </span>
+          <button
+            @click="copyLink"
+            class="text-gray-400 hover:text-indigo-500 transition-colors"
+            title="Copy link"
+          >
+            <svg v-if="!copied" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+            </svg>
+            <svg v-else class="w-3.5 h-3.5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+            </svg>
+          </button>
+        </div>
 
         <!-- Target URL -->
         <p class="mt-1 text-sm text-gray-500 dark:text-gray-400 truncate">
@@ -106,13 +119,35 @@ const serverUrl = computed(() => {
   return ''
 })
 
-defineProps<{
+const copied = ref(false)
+
+const copyLink = async () => {
+  const link = `${serverUrl.value}/s/${props.shortcut.name}`
+  try {
+    await navigator.clipboard.writeText(link)
+    copied.value = true
+    setTimeout(() => { copied.value = false }, 2000)
+  } catch {
+    // fallback
+    const input = document.createElement('input')
+    input.value = link
+    document.body.appendChild(input)
+    input.select()
+    document.execCommand('copy')
+    document.body.removeChild(input)
+    copied.value = true
+    setTimeout(() => { copied.value = false }, 2000)
+  }
+}
+
+const props = defineProps<{
   shortcut: ShortcutWithTags
 }>()
 
 defineEmits<{
   edit: [shortcut: ShortcutWithTags]
   delete: [shortcut: ShortcutWithTags]
+  stats: [shortcut: ShortcutWithTags]
   filterTag: [tag: string]
 }>()
 </script>
