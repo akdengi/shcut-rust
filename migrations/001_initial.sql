@@ -1,4 +1,4 @@
--- Slash Rust Fork - Initial Schema
+-- ShCut Rust - Initial Schema
 
 -- Users
 CREATE TABLE IF NOT EXISTS users (
@@ -46,29 +46,6 @@ CREATE TABLE IF NOT EXISTS shortcut_tags (
     PRIMARY KEY (shortcut_id, tag_id)
 );
 CREATE INDEX IF NOT EXISTS idx_shortcut_tags_tag ON shortcut_tags(tag_id);
-
--- Collections
-CREATE TABLE IF NOT EXISTS collections (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    creator_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    created_ts BIGINT NOT NULL DEFAULT (unixepoch()),
-    updated_ts BIGINT NOT NULL DEFAULT (unixepoch()),
-    name TEXT NOT NULL UNIQUE,
-    title TEXT NOT NULL DEFAULT '',
-    description TEXT NOT NULL DEFAULT '',
-    visibility TEXT NOT NULL CHECK (visibility IN ('workspace', 'public')) DEFAULT 'workspace'
-);
-CREATE INDEX IF NOT EXISTS idx_collections_creator ON collections(creator_id);
-CREATE INDEX IF NOT EXISTS idx_collections_name ON collections(name);
-
--- Collection-Shortcut junction table
-CREATE TABLE IF NOT EXISTS collection_shortcuts (
-    collection_id INTEGER NOT NULL REFERENCES collections(id) ON DELETE CASCADE,
-    shortcut_id INTEGER NOT NULL REFERENCES shortcuts(id) ON DELETE CASCADE,
-    position INTEGER NOT NULL DEFAULT 0,
-    PRIMARY KEY (collection_id, shortcut_id)
-);
-CREATE INDEX IF NOT EXISTS idx_collection_shortcuts_collection ON collection_shortcuts(collection_id);
 
 -- Activities (extended analytics)
 CREATE TABLE IF NOT EXISTS activities (
