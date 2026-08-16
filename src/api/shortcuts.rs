@@ -369,72 +369,82 @@ pub async fn redirect(
 
     match shortcut {
         Some(s) => {
-            // Increment view count
-            sqlx::query("UPDATE shortcuts SET view_count = view_count + 1 WHERE id = ?")
+            // Increment view count (fast, blocking)
+            let _ = sqlx::query("UPDATE shortcuts SET view_count = view_count + 1 WHERE id = ?")
                 .bind(s.id)
                 .execute(&state.db)
-                .await
-                .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+                .await;
 
-            // Collect analytics data
-            let user_agent = headers
-                .get("user-agent")
-                .and_then(|v| v.to_str().ok())
-                .unwrap_or("unknown")
-                .to_string();
-            let referer = headers
-                .get("referer")
-                .and_then(|v| v.to_str().ok())
-                .unwrap_or("direct")
-                .to_string();
+            // Check if analytics is enabled
+            let analytics_enabled = super::settings::get_bool_setting(&state.db, "analytics_enabled", true).await;
 
-            let (device, browser, os) = parse_user_agent(&user_agent);
-            let ip = addr.ip().to_string();
-            let referer_domain = extract_domain(&referer);
+            if analytics_enabled {
+                // Collect analytics in background (non-blocking for user)
+                let user_agent = headers
+                    .get("user-agent")
+                    .and_then(|v| v.to_str().ok())
+                    .unwrap_or("unknown")
+                    .to_string();
+                let referer = headers
+                    .get("referer")
+                    .and_then(|v| v.to_str().ok())
+                    .unwrap_or("direct")
+                    .to_string();
+                let ip = addr.ip().to_string();
+                let query = uri.query().unwrap_or("").to_string();
 
-            // Parse UTM parameters from the request URI
-            let query = uri.query().unwrap_or("");
-            let utm_source = extract_utm_param(query, "utm_source");
-            let utm_medium = extract_utm_param(query, "utm_medium");
-            let utm_campaign = extract_utm_param(query, "utm_campaign");
+                // Spawn background task for analytics (non-blocking)
+                let db = state.db.clone();
+                let creator_id = s.creator_id;
+                let shortcut_id = s.id;
+                tokio::spawn(async move {
+                    // Check individual analytics settings
+                    let collect_geo = super::settings::get_bool_setting(&db, "analytics_geolocation", true).await;
+                    let collect_utm = super::settings::get_bool_setting(&db, "analytics_utm", true).await;
+                    let collect_referrer = super::settings::get_bool_setting(&db, "analytics_referrer", true).await;
 
-            // Get geolocation from IP (non-blocking, best effort)
-            let (country, city) = get_geo_from_ip(&ip).await;
+                    let (device, browser, os) = parse_user_agent(&user_agent);
+                    let referer_domain = if collect_referrer { extract_domain(&referer) } else { "direct".to_string() };
+                    let utm_source = if collect_utm { extract_utm_param(&query, "utm_source") } else { None };
+                    let utm_medium = if collect_utm { extract_utm_param(&query, "utm_medium") } else { None };
+                    let utm_campaign = if collect_utm { extract_utm_param(&query, "utm_campaign") } else { None };
+                    let (country, city) = if collect_geo { get_geo_from_ip(&ip).await } else { (None, None) };
 
-            // Create activity record
-            let now = Utc::now().timestamp();
-            let payload = serde_json::json!({
-                "referer": referer,
-                "referer_domain": referer_domain,
-                "user_agent": user_agent,
-                "device": device,
-                "browser": browser,
-                "os": os,
-                "ip": ip,
-                "country": country,
-                "city": city,
-                "utm_source": utm_source,
-                "utm_medium": utm_medium,
-                "utm_campaign": utm_campaign,
+                let now = Utc::now().timestamp();
+                let payload = serde_json::json!({
+                    "referer": referer,
+                    "referer_domain": referer_domain,
+                    "user_agent": user_agent,
+                    "device": device,
+                    "browser": browser,
+                    "os": os,
+                    "ip": ip,
+                    "country": country,
+                    "city": city,
+                    "utm_source": utm_source,
+                    "utm_medium": utm_medium,
+                    "utm_campaign": utm_campaign,
+                });
+
+                let _ = sqlx::query(
+                    "INSERT INTO activities (creator_id, created_ts, type, level, payload, shortcut_id, referer, user_agent, ip_country, ip_city, utm_source, utm_medium, utm_campaign) VALUES (?, ?, 'shortcut.view', 'info', ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+                )
+                .bind(creator_id)
+                .bind(now)
+                .bind(payload.to_string())
+                .bind(shortcut_id)
+                .bind(&referer)
+                .bind(&user_agent)
+                .bind(&country)
+                .bind(&city)
+                .bind(&utm_source)
+                .bind(&utm_medium)
+                .bind(&utm_campaign)
+                .execute(&db)
+                .await;
             });
 
-            let _ = sqlx::query(
-                "INSERT INTO activities (creator_id, created_ts, type, level, payload, shortcut_id, referer, user_agent, ip_country, ip_city, utm_source, utm_medium, utm_campaign) VALUES (?, ?, 'shortcut.view', 'info', ?, ?, ?, ?, ?, ?, ?, ?, ?)"
-            )
-            .bind(s.creator_id)
-            .bind(now)
-            .bind(payload.to_string())
-            .bind(s.id)
-            .bind(&referer)
-            .bind(&user_agent)
-            .bind(&country)
-            .bind(&city)
-            .bind(&utm_source)
-            .bind(&utm_medium)
-            .bind(&utm_campaign)
-            .execute(&state.db)
-            .await;
-
+            // Redirect immediately (don't wait for analytics)
             Ok(axum::response::Redirect::temporary(&s.link))
         }
         None => Err(StatusCode::NOT_FOUND),

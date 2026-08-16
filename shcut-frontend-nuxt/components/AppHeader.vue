@@ -94,6 +94,14 @@
                   >
                     Tag Management
                   </NuxtLink>
+                  <NuxtLink
+                    v-if="authStore.isAdmin"
+                    to="/settings/analytics"
+                    class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                    @click="showMenu = false"
+                  >
+                    Analytics Settings
+                  </NuxtLink>
                   <hr class="my-1 border-gray-100 dark:border-gray-700" />
                   <button
                     @click="handleLogout"
