@@ -7,7 +7,7 @@ pkill -f cargo 2>/dev/null
 pkill -f rustc 2>/dev/null
 pkill -f npm 2>/dev/null
 sync
-echo 3 > /proc/sys/vm/drop_caches
+# echo 3 > /proc/sys/vm/drop_caches
 
 # Rebuild
 docker compose down
