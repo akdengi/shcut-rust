@@ -9,7 +9,7 @@ RUN apt-get update && apt-get install -y \
 
 COPY Cargo.toml Cargo.lock ./
 
-# Cache dependencies with dummy source
+# Cache dependencies
 RUN mkdir src && echo "fn main() {}" > src/main.rs
 RUN cargo build --release
 RUN rm -rf src
@@ -24,7 +24,7 @@ FROM node:24-alpine AS frontend-builder
 WORKDIR /app
 
 COPY shcut-frontend-nuxt/package*.json ./
-RUN npm install
+RUN npm ci
 
 COPY shcut-frontend-nuxt/ ./
 RUN npx nuxt generate

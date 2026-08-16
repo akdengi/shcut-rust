@@ -50,6 +50,7 @@ fi
 
 # 5. Build and run
 echo "[5/6] Building and starting..."
+export DOCKER_BUILDKIT=1
 docker compose up -d --build
 
 # 6. Wait and show status
@@ -65,4 +66,4 @@ echo ""
 echo "Useful commands:"
 echo "  docker compose logs -f    # View logs"
 echo "  docker compose down       # Stop"
-echo "  ./rebuild.sh              # Full rebuild without cache"
+echo "  ./rebuild.sh              # Rebuild with cache"
