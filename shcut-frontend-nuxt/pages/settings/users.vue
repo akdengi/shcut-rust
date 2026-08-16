@@ -63,12 +63,21 @@
                 {{ new Date(user.created_ts).toLocaleDateString() }}
               </td>
               <td class="px-6 py-4 text-right">
-                <button
-                  @click="openEdit(user)"
-                  class="text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:underline"
-                >
-                  Edit
-                </button>
+                <div class="flex items-center justify-end gap-2">
+                  <button
+                    @click="openEdit(user)"
+                    class="text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:underline"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    v-if="user.id !== currentUserId"
+                    @click="confirmDelete(user)"
+                    class="text-sm font-medium text-red-600 dark:text-red-400 hover:underline"
+                  >
+                    Delete
+                  </button>
+                </div>
               </td>
             </tr>
           </tbody>
@@ -138,12 +147,22 @@
         </div>
       </Transition>
     </Teleport>
+
+    <!-- Delete Confirmation -->
+    <ConfirmDialog
+      v-if="deletingUser"
+      title="Delete User"
+      :message="`Are you sure you want to delete user '${deletingUser.nickname}' (${deletingUser.email})?`"
+      @confirm="handleDelete"
+      @cancel="deletingUser = null"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from '#imports'
 import { useApi } from '~/composables/useApi'
+import { useAuthStore } from '~/stores/auth'
 import { useToast } from '~/composables/useToast'
 import type { User } from '~/types/api'
 
@@ -152,6 +171,7 @@ definePageMeta({
 })
 
 const api = useApi()
+const authStore = useAuthStore()
 const toast = useToast()
 
 const loading = ref(true)
@@ -160,6 +180,9 @@ const showEditForm = ref(false)
 const editingUser = ref<User | null>(null)
 const editForm = ref({ nickname: '', email: '' })
 const editSaving = ref(false)
+const deletingUser = ref<User | null>(null)
+
+const currentUserId = computed(() => authStore.user?.id)
 
 onMounted(async () => {
   try {
@@ -194,5 +217,21 @@ const handleEditSave = async () => {
   } finally {
     editSaving.value = false
   }
+}
+
+const confirmDelete = (user: User) => {
+  deletingUser.value = user
+}
+
+const handleDelete = async () => {
+  if (!deletingUser.value) return
+  try {
+    await api.del(`/api/v1/users/${deletingUser.value.id}`)
+    users.value = users.value.filter(u => u.id !== deletingUser.value!.id)
+    toast.success('User deleted')
+  } catch (e: any) {
+    toast.error(e?.data?.message || 'Failed to delete user')
+  }
+  deletingUser.value = null
 }
 </script>

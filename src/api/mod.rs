@@ -50,7 +50,7 @@ pub fn routes() -> Router<AppState> {
         .route("/api/v1/tags/{name}/shortcuts", get(tags::shortcuts_by_tag))
         // Users (admin only)
         .route("/api/v1/users", get(users::list))
-        .route("/api/v1/users/{id}", put(users::update))
+        .route("/api/v1/users/{id}", put(users::update).delete(users::delete))
         // Workspace settings (public read, admin write)
         .route("/api/v1/settings", get(settings::get_settings).put(settings::update_settings))
         // Logo upload

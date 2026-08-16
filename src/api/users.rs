@@ -87,3 +87,46 @@ pub async fn update(
 
     Ok(Json(user))
 }
+
+pub async fn delete(
+    State(state): State<AppState>,
+    Path(id): Path<i64>,
+    auth: AuthClaims,
+) -> Result<StatusCode, StatusCode> {
+    let current_user_id: i64 = auth.0.sub.parse().map_err(|_| StatusCode::UNAUTHORIZED)?;
+
+    // Only admin can delete users
+    let role = sqlx::query_scalar::<_, String>("SELECT role FROM users WHERE id = ?")
+        .bind(current_user_id)
+        .fetch_one(&state.db)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    if role != "admin" {
+        return Err(StatusCode::FORBIDDEN);
+    }
+
+    // Cannot delete yourself
+    if current_user_id == id {
+        return Err(StatusCode::BAD_REQUEST);
+    }
+
+    // Check if user exists
+    let existing = sqlx::query_scalar::<_, i64>("SELECT id FROM users WHERE id = ?")
+        .bind(id)
+        .fetch_optional(&state.db)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    if existing.is_none() {
+        return Err(StatusCode::NOT_FOUND);
+    }
+
+    sqlx::query("DELETE FROM users WHERE id = ?")
+        .bind(id)
+        .execute(&state.db)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    Ok(StatusCode::NO_CONTENT)
+}
