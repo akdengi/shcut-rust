@@ -152,6 +152,21 @@
       <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
         Press Enter or Tab to add a tag
       </p>
+      <!-- Popular tags -->
+      <div v-if="popularTags.length" class="mt-2">
+        <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Popular:</p>
+        <div class="flex flex-wrap gap-1.5">
+          <button
+            v-for="tag in popularTags"
+            :key="tag"
+            type="button"
+            @click="selectTag(tag)"
+            class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/30 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors"
+          >
+            + {{ tag }}
+          </button>
+        </div>
+      </div>
     </div>
 
     <!-- OG fields (collapsible) -->
@@ -255,6 +270,13 @@ const filteredTags = computed(() => {
   )
 })
 
+// Popular tags (top 5 that aren't selected)
+const popularTags = computed(() => {
+  return existingTags.value
+    .filter(t => !selectedTags.value.includes(t))
+    .slice(0, 5)
+})
+
 const selectTag = (tag: string) => {
   if (!selectedTags.value.includes(tag)) {
     selectedTags.value.push(tag)
@@ -319,6 +341,9 @@ watch(
 )
 
 const handleSubmit = async () => {
+  // Auto-add tag from input if there's text
+  addTagFromInput()
+
   submitting.value = true
   try {
     const payload: ShortcutCreatePayload = {
