@@ -44,7 +44,7 @@ pub fn routes() -> Router<AppState> {
         .route("/api/v1/shortcuts", get(shortcuts::list).post(shortcuts::create))
         .route("/api/v1/shortcuts/{id}", get(shortcuts::get).put(shortcuts::update).delete(shortcuts::delete))
         .route("/api/v1/shortcuts/by-name/{name}", get(shortcuts::get_by_name))
-        .route("/api/v1/shortcuts/{id}/analytics", get(analytics::shortcut_analytics))
+        .route("/api/v1/shortcuts/{id}/analytics", get(analytics::shortcut_analytics).delete(analytics::reset_analytics))
         // Tags
         .route("/api/v1/tags", get(tags::list).post(tags::create))
         .route("/api/v1/tags/{id}", put(tags::rename).delete(tags::delete))
