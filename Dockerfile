@@ -23,8 +23,6 @@ FROM node:24-alpine AS frontend-builder
 
 WORKDIR /app
 
-RUN npm config set registry https://registry.npmmirror.com
-
 COPY shcut-frontend-nuxt/package*.json ./
 RUN npm install
 
@@ -37,7 +35,6 @@ WORKDIR /app
 
 RUN apt-get update && apt-get install -y \
     ca-certificates \
-    sqlite3 \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /app/target/release/shcut-rust /app/shcut

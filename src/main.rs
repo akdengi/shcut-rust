@@ -9,7 +9,6 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 mod api;
 mod config;
 mod db;
-mod services;
 
 #[tokio::main]
 async fn main() {
