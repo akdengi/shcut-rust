@@ -361,6 +361,7 @@ pub async fn redirect(
     headers: HeaderMap,
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
 ) -> Result<axum::response::Redirect, StatusCode> {
+    // Only SELECT needed for redirect URL
     let shortcut = sqlx::query_as::<_, Shortcut>("SELECT * FROM shortcuts WHERE name = ?")
         .bind(&name)
         .fetch_optional(&state.db)
@@ -369,46 +370,49 @@ pub async fn redirect(
 
     match shortcut {
         Some(s) => {
-            // Increment view count (fast, blocking)
-            let _ = sqlx::query("UPDATE shortcuts SET view_count = view_count + 1 WHERE id = ?")
-                .bind(s.id)
-                .execute(&state.db)
-                .await;
+            let target = s.link.clone();
 
-            // Check if analytics is enabled
-            let analytics_enabled = super::settings::get_bool_setting(&state.db, "analytics_enabled", true).await;
+            // Capture request data for background task
+            let user_agent = headers
+                .get("user-agent")
+                .and_then(|v| v.to_str().ok())
+                .unwrap_or("unknown")
+                .to_string();
+            let referer = headers
+                .get("referer")
+                .and_then(|v| v.to_str().ok())
+                .unwrap_or("direct")
+                .to_string();
+            let ip = addr.ip().to_string();
+            let query = uri.query().unwrap_or("").to_string();
 
-            if analytics_enabled {
-                // Collect analytics in background (non-blocking for user)
-                let user_agent = headers
-                    .get("user-agent")
-                    .and_then(|v| v.to_str().ok())
-                    .unwrap_or("unknown")
-                    .to_string();
-                let referer = headers
-                    .get("referer")
-                    .and_then(|v| v.to_str().ok())
-                    .unwrap_or("direct")
-                    .to_string();
-                let ip = addr.ip().to_string();
-                let query = uri.query().unwrap_or("").to_string();
+            // ALL database work in background - redirect is instant
+            let db = state.db.clone();
+            let creator_id = s.creator_id;
+            let shortcut_id = s.id;
+            tokio::spawn(async move {
+                // Increment view count
+                let _ = sqlx::query("UPDATE shortcuts SET view_count = view_count + 1 WHERE id = ?")
+                    .bind(shortcut_id)
+                    .execute(&db)
+                    .await;
 
-                // Spawn background task for analytics (non-blocking)
-                let db = state.db.clone();
-                let creator_id = s.creator_id;
-                let shortcut_id = s.id;
-                tokio::spawn(async move {
-                    // Check individual analytics settings
-                    let collect_geo = super::settings::get_bool_setting(&db, "analytics_geolocation", true).await;
-                    let collect_utm = super::settings::get_bool_setting(&db, "analytics_utm", true).await;
-                    let collect_referrer = super::settings::get_bool_setting(&db, "analytics_referrer", true).await;
+                // Check analytics settings
+                let analytics_enabled = super::settings::get_bool_setting(&db, "analytics_enabled", true).await;
+                if !analytics_enabled {
+                    return;
+                }
 
-                    let (device, browser, os) = parse_user_agent(&user_agent);
-                    let referer_domain = if collect_referrer { extract_domain(&referer) } else { "direct".to_string() };
-                    let utm_source = if collect_utm { extract_utm_param(&query, "utm_source") } else { None };
-                    let utm_medium = if collect_utm { extract_utm_param(&query, "utm_medium") } else { None };
-                    let utm_campaign = if collect_utm { extract_utm_param(&query, "utm_campaign") } else { None };
-                    let (country, city) = if collect_geo { get_geo_from_ip(&ip).await } else { (None, None) };
+                let collect_geo = super::settings::get_bool_setting(&db, "analytics_geolocation", true).await;
+                let collect_utm = super::settings::get_bool_setting(&db, "analytics_utm", true).await;
+                let collect_referrer = super::settings::get_bool_setting(&db, "analytics_referrer", true).await;
+
+                let (device, browser, os) = parse_user_agent(&user_agent);
+                let referer_domain = if collect_referrer { extract_domain(&referer) } else { "direct".to_string() };
+                let utm_source = if collect_utm { extract_utm_param(&query, "utm_source") } else { None };
+                let utm_medium = if collect_utm { extract_utm_param(&query, "utm_medium") } else { None };
+                let utm_campaign = if collect_utm { extract_utm_param(&query, "utm_campaign") } else { None };
+                let (country, city) = if collect_geo { get_geo_from_ip(&ip).await } else { (None, None) };
 
                 let now = Utc::now().timestamp();
                 let payload = serde_json::json!({
@@ -444,8 +448,8 @@ pub async fn redirect(
                 .await;
             });
 
-            // Redirect immediately (don't wait for analytics)
-            Ok(axum::response::Redirect::temporary(&s.link))
+            // Redirect IMMEDIATELY - only waited for SELECT
+            Ok(axum::response::Redirect::temporary(&target))
         }
         None => Err(StatusCode::NOT_FOUND),
     }
