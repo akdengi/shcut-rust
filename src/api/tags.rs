@@ -35,19 +35,36 @@ pub async fn shortcuts_by_tag(
     .await
     .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
-    // Fetch tags for each shortcut
-    let mut result = Vec::new();
-    for shortcut in shortcuts {
-        let tags = sqlx::query_scalar::<_, String>(
-            "SELECT t.name FROM tags t JOIN shortcut_tags st ON t.id = st.tag_id WHERE st.shortcut_id = ?",
-        )
-        .bind(shortcut.id)
-        .fetch_all(&state.db)
-        .await
-        .unwrap_or_default();
+    // Fetch ALL tags for these shortcuts in ONE query
+    let shortcut_ids: Vec<i64> = shortcuts.iter().map(|s| s.id).collect();
+    let tags_map = if shortcut_ids.is_empty() {
+        std::collections::HashMap::new()
+    } else {
+        let placeholders: String = shortcut_ids.iter().map(|_| "?").collect::<Vec<_>>().join(",");
+        let tags_query = format!(
+            "SELECT st.shortcut_id, t.name FROM tags t JOIN shortcut_tags st ON t.id = st.tag_id WHERE st.shortcut_id IN ({})",
+            placeholders
+        );
+        let mut tags_builder = sqlx::query_as::<_, (i64, String)>(&tags_query);
+        for id in &shortcut_ids {
+            tags_builder = tags_builder.bind(id);
+        }
+        let rows = tags_builder.fetch_all(&state.db).await.unwrap_or_default();
+        let mut map: std::collections::HashMap<i64, Vec<String>> = std::collections::HashMap::new();
+        for (shortcut_id, tag_name) in rows {
+            map.entry(shortcut_id).or_default().push(tag_name);
+        }
+        map
+    };
 
-        result.push(ShortcutWithTags { shortcut, tags });
-    }
+    // Build result
+    let result: Vec<ShortcutWithTags> = shortcuts
+        .into_iter()
+        .map(|shortcut| {
+            let tags = tags_map.get(&shortcut.id).cloned().unwrap_or_default();
+            ShortcutWithTags { shortcut, tags }
+        })
+        .collect();
 
     Ok(Json(result))
 }

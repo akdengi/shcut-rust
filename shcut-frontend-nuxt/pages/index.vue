@@ -369,7 +369,7 @@ const handleShortcutSubmit = async (payload: ShortcutCreatePayload) => {
       success('Shortcut created')
     }
     closeDrawer()
-    loadShortcuts()
+    // Tags refresh in background
     loadTags()
   } catch (e: any) {
     // error shown in console
