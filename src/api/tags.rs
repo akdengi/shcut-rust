@@ -56,7 +56,7 @@ pub async fn create(
     State(state): State<AppState>,
     _auth: AuthClaims,
     Json(input): Json<CreateTag>,
-) -> Result<Json<Tag>, StatusCode> {
+) -> Result<Json<TagWithCount>, StatusCode> {
     let name = input.name.trim().to_lowercase();
     if name.is_empty() {
         return Err(StatusCode::BAD_REQUEST);

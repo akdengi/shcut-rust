@@ -179,7 +179,7 @@ pub async fn shortcut_analytics(
         }
 
         // Group by date
-        let date = chrono::NaiveDateTime::from_timestamp_opt(activity.created_ts, 0)
+        let date = chrono::DateTime::from_timestamp(activity.created_ts, 0)
             .map(|dt| dt.format("%Y-%m-%d").to_string())
             .unwrap_or_else(|| "unknown".to_string());
         *date_map.entry(date).or_insert(0) += 1;

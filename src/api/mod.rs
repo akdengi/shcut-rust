@@ -7,7 +7,7 @@ pub mod analytics;
 pub mod auth_extractor;
 pub mod settings;
 
-use axum::{Router, routing::{get, post, put, delete}, Json};
+use axum::{Router, routing::{get, post, put}, Json};
 use serde_json::{json, Value};
 use sqlx::SqlitePool;
 use tower_http::services::ServeDir;
