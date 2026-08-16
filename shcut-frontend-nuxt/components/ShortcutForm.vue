@@ -98,16 +98,60 @@
 
     <!-- Tags -->
     <div>
-      <label for="shortcut-tags" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
         Tags
       </label>
-      <input
-        id="shortcut-tags"
-        v-model="tagsInput"
-        type="text"
-        placeholder="Comma separated: tag1, tag2"
-        class="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors"
-      />
+      <!-- Selected tags -->
+      <div v-if="selectedTags.length" class="flex flex-wrap gap-1.5 mb-2">
+        <span
+          v-for="tag in selectedTags"
+          :key="tag"
+          class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300"
+        >
+          {{ tag }}
+          <button
+            type="button"
+            @click="removeTag(tag)"
+            class="hover:text-indigo-900 dark:hover:text-indigo-100"
+          >
+            <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </span>
+      </div>
+      <!-- Tag input -->
+      <div class="relative">
+        <input
+          v-model="tagInput"
+          type="text"
+          placeholder="Type to add tags..."
+          class="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors"
+          @keydown.enter.prevent="addTagFromInput"
+          @keydown.tab.prevent="addTagFromInput"
+          @input="onTagInput"
+          @focus="showTagSuggestions = true"
+          @blur="hideTagSuggestions"
+        />
+        <!-- Suggestions dropdown -->
+        <div
+          v-if="showTagSuggestions && filteredTags.length"
+          class="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-40 overflow-y-auto"
+        >
+          <button
+            v-for="tag in filteredTags"
+            :key="tag"
+            type="button"
+            class="w-full text-left px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            @mousedown.prevent="selectTag(tag)"
+          >
+            {{ tag }}
+          </button>
+        </div>
+      </div>
+      <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+        Press Enter or Tab to add a tag
+      </p>
     </div>
 
     <!-- OG fields (collapsible) -->
@@ -158,7 +202,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from '#imports'
+import { ref, watch, computed, onMounted } from '#imports'
 import type { ShortcutWithTags, ShortcutCreatePayload } from '~/types/api'
 
 const props = defineProps<{
@@ -184,7 +228,63 @@ const form = ref({
   og_image: '',
 })
 
-const tagsInput = ref('')
+const selectedTags = ref<string[]>([])
+const tagInput = ref('')
+const showTagSuggestions = ref(false)
+const existingTags = ref<string[]>([])
+
+// Fetch existing tags
+onMounted(async () => {
+  try {
+    const tags = await $fetch<{ id: number; name: string }[]>('/api/v1/tags')
+    existingTags.value = tags.map(t => t.name)
+  } catch {
+    // ignore
+  }
+})
+
+// Filtered suggestions based on input
+const filteredTags = computed(() => {
+  const input = tagInput.value.toLowerCase().trim()
+  if (!input) {
+    // Show all tags that aren't already selected
+    return existingTags.value.filter(t => !selectedTags.value.includes(t))
+  }
+  return existingTags.value.filter(t =>
+    t.toLowerCase().includes(input) && !selectedTags.value.includes(t)
+  )
+})
+
+const selectTag = (tag: string) => {
+  if (!selectedTags.value.includes(tag)) {
+    selectedTags.value.push(tag)
+  }
+  tagInput.value = ''
+  showTagSuggestions.value = false
+}
+
+const addTagFromInput = () => {
+  const tag = tagInput.value.trim().toLowerCase()
+  if (tag && !selectedTags.value.includes(tag)) {
+    selectedTags.value.push(tag)
+  }
+  tagInput.value = ''
+}
+
+const removeTag = (tag: string) => {
+  selectedTags.value = selectedTags.value.filter(t => t !== tag)
+}
+
+const onTagInput = () => {
+  showTagSuggestions.value = true
+}
+
+const hideTagSuggestions = () => {
+  // Delay to allow click on suggestion
+  setTimeout(() => {
+    showTagSuggestions.value = false
+  }, 200)
+}
 
 watch(
   () => props.shortcut,
@@ -200,7 +300,19 @@ watch(
         og_description: s.og_description || '',
         og_image: s.og_image || '',
       }
-      tagsInput.value = s.tags?.join(', ') || ''
+      selectedTags.value = [...(s.tags || [])]
+    } else {
+      form.value = {
+        name: '',
+        link: '',
+        title: '',
+        description: '',
+        visibility: 'workspace',
+        og_title: '',
+        og_description: '',
+        og_image: '',
+      }
+      selectedTags.value = []
     }
   },
   { immediate: true }
@@ -209,11 +321,6 @@ watch(
 const handleSubmit = async () => {
   submitting.value = true
   try {
-    const tags = tagsInput.value
-      .split(',')
-      .map((t) => t.trim())
-      .filter(Boolean)
-
     const payload: ShortcutCreatePayload = {
       name: form.value.name,
       link: form.value.link,
@@ -222,7 +329,7 @@ const handleSubmit = async () => {
 
     if (form.value.title) payload.title = form.value.title
     if (form.value.description) payload.description = form.value.description
-    if (tags.length) payload.tags = tags
+    if (selectedTags.value.length) payload.tags = [...selectedTags.value]
     if (form.value.og_title) payload.og_title = form.value.og_title
     if (form.value.og_description) payload.og_description = form.value.og_description
     if (form.value.og_image) payload.og_image = form.value.og_image

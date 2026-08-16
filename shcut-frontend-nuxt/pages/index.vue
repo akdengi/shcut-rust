@@ -13,6 +13,16 @@
         <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Recent Shortcuts</h2>
 
         <div class="flex items-center gap-3">
+          <!-- Tag filter -->
+          <select
+            v-model="tagFilter"
+            @change="handleFilterChange"
+            class="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          >
+            <option value="">All tags</option>
+            <option v-for="tag in availableTags" :key="tag" :value="tag">{{ tag }}</option>
+          </select>
+
           <!-- Per page selector -->
           <select
             v-model="perPage"
@@ -128,7 +138,8 @@
                     <span
                       v-for="tag in shortcut.tags"
                       :key="tag"
-                      class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400"
+                      class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 cursor-pointer hover:bg-indigo-100 dark:hover:bg-indigo-900/50"
+                      @click="tagFilter = tag; handleFilterChange()"
                     >
                       {{ tag }}
                     </span>
@@ -232,7 +243,7 @@
 </template>
 
 <script setup lang="ts">
-import type { ShortcutWithTags } from '~/types/api'
+import type { ShortcutWithTags, ShortcutCreatePayload } from '~/types/api'
 
 definePageMeta({ middleware: 'auth' })
 
@@ -242,6 +253,8 @@ const { success } = useToast()
 
 const viewMode = ref<'cards' | 'table'>('cards')
 const perPage = ref(20)
+const tagFilter = ref('')
+const availableTags = ref<string[]>([])
 const showCreateDrawer = ref(false)
 const editingShortcut = ref<ShortcutWithTags | null>(null)
 const deletingShortcut = ref<ShortcutWithTags | null>(null)
@@ -250,19 +263,45 @@ const totalViews = computed(() =>
   shortcutsStore.items.reduce((sum, s) => sum + s.view_count, 0)
 )
 
+const loadShortcuts = () => {
+  const params: any = { per_page: perPage.value }
+  if (tagFilter.value) params.tag = tagFilter.value
+  shortcutsStore.fetchShortcuts(params)
+}
+
+const loadTags = async () => {
+  try {
+    const tags = await $fetch<{ id: number; name: string }[]>('/api/v1/tags')
+    availableTags.value = tags.map(t => t.name)
+  } catch {
+    // ignore
+  }
+}
+
 onMounted(async () => {
   await Promise.all([
-    shortcutsStore.fetchShortcuts({ per_page: perPage.value }),
+    loadShortcuts(),
     collectionsStore.fetchCollections(),
+    loadTags(),
   ])
 })
 
 const changePage = (page: number) => {
-  shortcutsStore.fetchShortcuts({ page, per_page: perPage.value })
+  const params: any = { page, per_page: perPage.value }
+  if (tagFilter.value) params.tag = tagFilter.value
+  shortcutsStore.fetchShortcuts(params)
 }
 
 const handlePerPageChange = () => {
-  shortcutsStore.fetchShortcuts({ page: 1, per_page: perPage.value })
+  const params: any = { page: 1, per_page: perPage.value }
+  if (tagFilter.value) params.tag = tagFilter.value
+  shortcutsStore.fetchShortcuts(params)
+}
+
+const handleFilterChange = () => {
+  const params: any = { page: 1, per_page: perPage.value }
+  if (tagFilter.value) params.tag = tagFilter.value
+  shortcutsStore.fetchShortcuts(params)
 }
 
 const editShortcut = (shortcut: ShortcutWithTags) => {
@@ -279,15 +318,28 @@ const handleDelete = async () => {
   try {
     await shortcutsStore.deleteShortcut(deletingShortcut.value.id)
     success('Shortcut deleted')
+    loadShortcuts()
   } catch {
     // error handled by toast
   }
   deletingShortcut.value = null
 }
 
-const handleShortcutSubmit = () => {
-  closeDrawer()
-  shortcutsStore.fetchShortcuts({ page: shortcutsStore.page, per_page: perPage.value })
+const handleShortcutSubmit = async (payload: ShortcutCreatePayload) => {
+  try {
+    if (editingShortcut.value) {
+      await shortcutsStore.updateShortcut(editingShortcut.value.id, payload)
+      success('Shortcut updated')
+    } else {
+      await shortcutsStore.createShortcut(payload)
+      success('Shortcut created')
+    }
+    closeDrawer()
+    loadShortcuts()
+    loadTags() // refresh tags list
+  } catch (e: any) {
+    // error shown in console
+  }
 }
 
 const closeDrawer = () => {

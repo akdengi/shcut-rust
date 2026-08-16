@@ -25,6 +25,13 @@
         <SearchInput v-model="searchQuery" placeholder="Search shortcuts..." />
       </div>
       <select
+        v-model="tagFilter"
+        class="px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
+      >
+        <option value="">All tags</option>
+        <option v-for="tag in availableTags" :key="tag" :value="tag">{{ tag }}</option>
+      </select>
+      <select
         v-model="visibilityFilter"
         class="px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
       >
@@ -150,21 +157,36 @@ const toast = useToast()
 
 const searchQuery = ref('')
 const visibilityFilter = ref('')
+const tagFilter = ref('')
+const availableTags = ref<string[]>([])
 const showForm = ref(false)
 const editingShortcut = ref<ShortcutWithTags | null>(null)
 const showDeleteConfirm = ref(false)
 const deletingShortcut = ref<ShortcutWithTags | null>(null)
 
+const loadTags = async () => {
+  try {
+    const tags = await $fetch<{ id: number; name: string }[]>('/api/v1/tags')
+    availableTags.value = tags.map(t => t.name)
+  } catch {
+    // ignore
+  }
+}
+
 const loadShortcuts = () => {
   const params: any = { page: 1, per_page: 20 }
   if (searchQuery.value) params.search = searchQuery.value
   if (visibilityFilter.value) params.visibility = visibilityFilter.value
+  if (tagFilter.value) params.tag = tagFilter.value
   shortcutsStore.fetchShortcuts(params)
 }
 
-onMounted(loadShortcuts)
+onMounted(() => {
+  loadShortcuts()
+  loadTags()
+})
 
-watch([searchQuery, visibilityFilter], () => {
+watch([searchQuery, visibilityFilter, tagFilter], () => {
   loadShortcuts()
 })
 
@@ -172,6 +194,7 @@ const goToPage = (page: number) => {
   const params: any = { page, per_page: 20 }
   if (searchQuery.value) params.search = searchQuery.value
   if (visibilityFilter.value) params.visibility = visibilityFilter.value
+  if (tagFilter.value) params.tag = tagFilter.value
   shortcutsStore.fetchShortcuts(params)
 }
 
@@ -201,6 +224,7 @@ const handleFormSubmit = async (payload: any) => {
     }
     closeForm()
     loadShortcuts()
+    loadTags() // refresh tags list
   } catch (e: any) {
     toast.error(e?.data?.message || 'Failed to save shortcut')
   }
