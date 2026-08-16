@@ -1,6 +1,6 @@
 use axum::{
     extract::{Request, State},
-    http::{header::AUTHORIZATION, StatusCode},
+    http::{header::AUTHORIZATION, Method, StatusCode},
     middleware::Next,
     response::Response,
 };
@@ -50,7 +50,8 @@ pub async fn auth_middleware(
 ) -> Result<Response, StatusCode> {
     // Skip auth for public routes
     let path = request.uri().path().to_string();
-    if is_public_route(&path) {
+    let method = request.method().clone();
+    if is_public_route(&path, &method) {
         return Ok(next.run(request).await);
     }
 
@@ -80,7 +81,7 @@ pub async fn auth_middleware(
 }
 
 /// Check if a route is public (doesn't require authentication)
-fn is_public_route(path: &str) -> bool {
+fn is_public_route(path: &str, method: &Method) -> bool {
     // Health check
     if path == "/healthz" {
         return true;
@@ -94,8 +95,13 @@ fn is_public_route(path: &str) -> bool {
         return true;
     }
 
-    // Workspace settings (public read)
-    if path == "/api/v1/settings" {
+    // Workspace settings (public read only)
+    if path == "/api/v1/settings" && method == Method::GET {
+        return true;
+    }
+
+    // Tags (public read)
+    if path == "/api/v1/tags" {
         return true;
     }
 
