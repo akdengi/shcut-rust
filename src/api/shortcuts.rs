@@ -6,6 +6,7 @@ use axum::{
 use chrono::Utc;
 use serde::Deserialize;
 use std::net::SocketAddr;
+use tracing::error;
 
 use super::{AppState, auth_extractor::AuthClaims};
 use crate::db::models::{CreateShortcut, PaginatedResponse, Shortcut, ShortcutWithTags, UpdateShortcut};
@@ -66,7 +67,10 @@ pub async fn list(
     let total = count_query_builder
         .fetch_one(&state.db)
         .await
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+        .map_err(|e| {
+            error!("Failed to count shortcuts: {}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
 
     // Fetch shortcuts
     let query = format!(
@@ -82,7 +86,10 @@ pub async fn list(
     let shortcuts = query_builder
         .fetch_all(&state.db)
         .await
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+        .map_err(|e| {
+            error!("Failed to fetch shortcuts: {}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
 
     // Fetch ALL tags for these shortcuts in ONE query
     let shortcut_ids: Vec<i64> = shortcuts.iter().map(|s| s.id).collect();
