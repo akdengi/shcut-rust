@@ -1,0 +1,17 @@
+target/
+data/
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+.git/
+.gitignore
+.env
+.env.*
+*.md
+.vscode/
+.idea/
+node_modules/
+.nuxt/
+.output/
+.mimocode/

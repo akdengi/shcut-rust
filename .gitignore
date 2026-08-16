@@ -1,0 +1,45 @@
+# Rust
+/target
+**/*.rs.bk
+
+# Database
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node (frontend)
+shcut-frontend-nuxt/node_modules/
+shcut-frontend-nuxt/.nuxt/
+shcut-frontend-nuxt/.output/
+shcut-frontend-nuxt/dist/
+
+# Docker
+docker-compose.override.yml
+
+# Logs
+*.log
+
+# Python
+__pycache__/
+*.pyc
+.mypy_cache/
+
+# MiMoCode
+.mimocode/

@@ -1,0 +1,47 @@
+[package]
+name = "shcut-rust"
+version = "0.1.0"
+edition = "2021"
+description = "shcut - Self-hosted URL shortener"
+
+[dependencies]
+# Web framework
+axum = { version = "0.8", features = ["macros"] }
+tower = "0.5"
+tower-http = { version = "0.6", features = ["cors", "fs", "trace"] }
+tokio = { version = "1", features = ["full"] }
+
+# Database
+sqlx = { version = "0.8", features = ["runtime-tokio", "sqlite", "chrono"] }
+
+# Serialization
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# Auth
+jsonwebtoken = "9"
+argon2 = "0.5"
+password-hash = "0.5"
+
+# Config
+dotenvy = "0.15"
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# Error handling
+thiserror = "2"
+
+# Random
+rand = "0.8"
+chrono = { version = "0.4", features = ["serde"] }
+
+# Caching
+dashmap = "6"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+strip = true

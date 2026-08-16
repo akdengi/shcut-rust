@@ -1,0 +1,19 @@
+services:
+  shcut:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "5231:5231"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - DATABASE_URL=/app/data/shcut.db
+      - JWT_SECRET=${JWT_SECRET:-your-secret-key-change-in-production}
+      - ADMIN_EMAIL=${ADMIN_EMAIL:-}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-}
+      - ADMIN_NICKNAME=${ADMIN_NICKNAME:-admin}
+      - ALLOW_REGISTRATION=${ALLOW_REGISTRATION:-true}
+      - RUST_LOG=shcut_rust=info,tower_http=info
+    user: root
+    restart: unless-stopped
