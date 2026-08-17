@@ -213,7 +213,7 @@
                   <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>
               </div>
-              <ShortcutForm :shortcut="shortcut" @submit="handleEditSubmit" @cancel="showEditForm = false" />
+              <ShortcutForm :shortcut="shortcut" :loading="submitting" @submit="handleEditSubmit" @cancel="showEditForm = false" />
             </div>
           </div>
         </div>
@@ -246,6 +246,7 @@ const loading = ref(true)
 const showEditForm = ref(false)
 const showDeleteConfirm = ref(false)
 const showResetConfirm = ref(false)
+const submitting = ref(false)
 const analytics = ref<ShortcutAnalytics | null>(null)
 const activities = ref<any[]>([])
 const copied = ref(false)
@@ -339,12 +340,15 @@ const copyLink = async () => {
 
 const handleEditSubmit = async (payload: any) => {
   if (!shortcut.value) return
+  submitting.value = true
   try {
     await shortcutsStore.updateShortcut(shortcut.value.id, payload)
     toast.success('Shortcut updated')
     showEditForm.value = false
   } catch (e: any) {
     toast.error(e?.data?.message || 'Failed to update')
+  } finally {
+    submitting.value = false
   }
 }
 

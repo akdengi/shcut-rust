@@ -256,6 +256,7 @@
           <div class="flex-1 overflow-y-auto px-6 py-4">
             <ShortcutForm
               :shortcut="editingShortcut"
+              :loading="submitting"
               @submit="handleShortcutSubmit"
               @cancel="closeDrawer"
             />
@@ -293,6 +294,7 @@ const showCreateDrawer = ref(false)
 const editingShortcut = ref<ShortcutWithTags | null>(null)
 const deletingShortcut = ref<ShortcutWithTags | null>(null)
 const showDeleteConfirm = ref(false)
+const submitting = ref(false)
 
 const loadShortcuts = () => {
   const params: any = { per_page: perPage.value || 9999 }
@@ -378,6 +380,7 @@ const handleDelete = async () => {
 }
 
 const handleShortcutSubmit = async (payload: ShortcutCreatePayload) => {
+  submitting.value = true
   try {
     if (editingShortcut.value) {
       await shortcutsStore.updateShortcut(editingShortcut.value.id, payload)
@@ -387,10 +390,11 @@ const handleShortcutSubmit = async (payload: ShortcutCreatePayload) => {
       success('Shortcut created')
     }
     closeDrawer()
-    // Tags refresh in background
     loadTags()
   } catch (e: any) {
-    // error shown in console
+    // error shown in toast
+  } finally {
+    submitting.value = false
   }
 }
 

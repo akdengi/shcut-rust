@@ -179,6 +179,7 @@ import type { ShortcutWithTags, ShortcutCreatePayload } from '~/types/api'
 
 const props = defineProps<{
   shortcut?: ShortcutWithTags | null
+  loading?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -187,7 +188,7 @@ const emit = defineEmits<{
 }>()
 
 const editMode = computed(() => !!props.shortcut)
-const submitting = ref(false)
+const submitting = computed(() => props.loading ?? false)
 
 const form = ref({
   name: '',
@@ -255,25 +256,20 @@ watch(
   { immediate: true }
 )
 
-const handleSubmit = async () => {
-  submitting.value = true
-  try {
-    const payload: ShortcutCreatePayload = {
-      name: form.value.name,
-      link: form.value.link,
-      visibility: form.value.visibility,
-      tags: [...selectedTags.value],
-    }
-
-    if (form.value.title) payload.title = form.value.title
-    if (form.value.description) payload.description = form.value.description
-    if (form.value.og_title) payload.og_title = form.value.og_title
-    if (form.value.og_description) payload.og_description = form.value.og_description
-    if (form.value.og_image) payload.og_image = form.value.og_image
-
-    emit('submit', payload)
-  } finally {
-    submitting.value = false
+const handleSubmit = () => {
+  const payload: ShortcutCreatePayload = {
+    name: form.value.name,
+    link: form.value.link,
+    visibility: form.value.visibility,
+    tags: [...selectedTags.value],
   }
+
+  if (form.value.title) payload.title = form.value.title
+  if (form.value.description) payload.description = form.value.description
+  if (form.value.og_title) payload.og_title = form.value.og_title
+  if (form.value.og_description) payload.og_description = form.value.og_description
+  if (form.value.og_image) payload.og_image = form.value.og_image
+
+  emit('submit', payload)
 }
 </script>
