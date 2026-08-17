@@ -4,6 +4,19 @@
       <!-- Toolbar -->
       <div class="flex items-center justify-between mb-6 gap-4 flex-wrap">
         <div class="flex items-center gap-3">
+          <!-- Search -->
+          <div class="relative">
+            <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input
+              v-model="searchQuery"
+              type="text"
+              placeholder="Search shortcuts..."
+              class="pl-9 pr-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 w-48"
+            />
+          </div>
+
           <!-- Tag filter -->
           <select
             v-model="tagFilter"
@@ -88,7 +101,7 @@
       <!-- Cards view -->
       <div v-else-if="viewMode === 'cards'" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <ShortcutCard
-          v-for="(shortcut, idx) in shortcutsStore.items"
+          v-for="(shortcut, idx) in sortedItems"
           :key="shortcut.id"
           :shortcut="shortcut"
           :index="(shortcutsStore.page - 1) * (shortcutsStore.perPage || shortcutsStore.total) + idx + 1"
@@ -302,9 +315,14 @@ const showDeleteConfirm = ref(false)
 const submitting = ref(false)
 const sortField = ref<'id' | 'name'>('id')
 const sortDir = ref<'asc' | 'desc'>('asc')
+const searchQuery = ref('')
 
 const sortedItems = computed(() => {
-  const items = [...shortcutsStore.items]
+  let items = [...shortcutsStore.items]
+  if (searchQuery.value) {
+    const q = searchQuery.value.toLowerCase()
+    items = items.filter(s => s.name.toLowerCase().includes(q))
+  }
   items.sort((a, b) => {
     const valA = a[sortField.value]
     const valB = b[sortField.value]
