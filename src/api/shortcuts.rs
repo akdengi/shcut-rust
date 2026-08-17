@@ -242,6 +242,12 @@ pub async fn create(
         .await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
+    // Add to URL cache
+    {
+        let mut cache = state.url_cache.write().await;
+        cache.insert(shortcut.name.clone(), (shortcut_id, shortcut.link.clone(), user_id));
+    }
+
     let tags = get_shortcut_tags(&state.db, shortcut_id)
         .await
         .unwrap_or_default();
@@ -329,6 +335,15 @@ pub async fn update(
         .await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
+    // Invalidate URL cache for old and new name
+    {
+        let mut cache = state.url_cache.write().await;
+        if existing.name != shortcut.name {
+            cache.remove(&existing.name);
+        }
+        cache.insert(shortcut.name.clone(), (id, shortcut.link.clone(), shortcut.creator_id));
+    }
+
     let tags = get_shortcut_tags(&state.db, id)
         .await
         .unwrap_or_default();
@@ -371,6 +386,12 @@ pub async fn delete(
         .await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
+    // Invalidate URL cache
+    {
+        let mut cache = state.url_cache.write().await;
+        cache.retain(|_, (cached_id, _, _)| *cached_id != id);
+    }
+
     Ok(StatusCode::NO_CONTENT)
 }
 
@@ -381,107 +402,120 @@ pub async fn redirect(
     headers: HeaderMap,
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
 ) -> Result<axum::response::Redirect, StatusCode> {
-    // Only SELECT needed for redirect URL
-    let shortcut = sqlx::query_as::<_, Shortcut>("SELECT * FROM shortcuts WHERE name = ?")
-        .bind(&name)
-        .fetch_optional(&state.db)
-        .await
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    // Try URL cache first for instant redirect
+    let cached = {
+        let cache = state.url_cache.read().await;
+        cache.get(&name).cloned()
+    };
 
-    match shortcut {
-        Some(s) => {
-            let target = s.link.clone();
+    let (shortcut_id, target, creator_id) = if let Some((id, url, cid)) = cached {
+        (id, url, cid)
+    } else {
+        // Cache miss: query DB and cache the result
+        let shortcut = sqlx::query_as::<_, Shortcut>("SELECT * FROM shortcuts WHERE name = ?")
+            .bind(&name)
+            .fetch_optional(&state.db)
+            .await
+            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
-            // Capture request data for background task
-            let user_agent = headers
-                .get("user-agent")
-                .and_then(|v| v.to_str().ok())
-                .unwrap_or("unknown")
-                .to_string();
-            let referer = headers
-                .get("referer")
-                .and_then(|v| v.to_str().ok())
-                .unwrap_or("direct")
-                .to_string();
-            let ip = addr.ip().to_string();
-            let query = uri.query().unwrap_or("").to_string();
-
-            // Dedup: skip if same IP viewed this shortcut within last 60s
-            let dedup_key = format!("{}:{}", s.id, ip);
-            let now = Utc::now().timestamp();
-            {
-                let mut dedup = state.view_dedup.write().await;
-                if let Some(last_seen) = dedup.get(&dedup_key) {
-                    if now - last_seen < 60 {
-                        // Recent view from same IP, skip counting but still redirect
-                        return Ok(axum::response::Redirect::temporary(&target));
-                    }
+        match shortcut {
+            Some(s) => {
+                let target = s.link.clone();
+                // Cache for next time
+                {
+                    let mut cache = state.url_cache.write().await;
+                    cache.insert(name.clone(), (s.id, target.clone(), s.creator_id));
                 }
-                dedup.insert(dedup_key, now);
+                (s.id, target, s.creator_id)
+            }
+            None => return Err(StatusCode::NOT_FOUND),
+        }
+    };
 
-                // Cleanup old entries (keep last 10k)
-                if dedup.len() > 10000 {
-                    let cutoff = now - 120;
-                    dedup.retain(|_, ts| *ts > cutoff);
+    // Redirect IMMEDIATELY — no DB, no dedup, just the cached URL
+    let redirect_resp = Ok(axum::response::Redirect::temporary(&target));
+
+    // ALL analytics work in background
+    let user_agent = headers
+        .get("user-agent")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("unknown")
+        .to_string();
+    let referer = headers
+        .get("referer")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("direct")
+        .to_string();
+    let ip = addr.ip().to_string();
+    let query = uri.query().unwrap_or("").to_string();
+
+    let db = state.db.clone();
+    let dedup_cache = state.view_dedup.clone();
+    tokio::spawn(async move {
+        // Dedup: skip if same IP viewed this shortcut within last 60s
+        let dedup_key = format!("{}:{}", shortcut_id, ip);
+        let now = Utc::now().timestamp();
+        {
+            let mut dedup = dedup_cache.write().await;
+            if let Some(last_seen) = dedup.get(&dedup_key) {
+                if now - last_seen < 60 {
+                    return; // Recent view, skip
                 }
             }
-
-            // ALL database work in background - redirect is instant
-            let db = state.db.clone();
-            let creator_id = s.creator_id;
-            let shortcut_id = s.id;
-            tokio::spawn(async move {
-                // Increment view count
-                let _ = sqlx::query("UPDATE shortcuts SET view_count = view_count + 1 WHERE id = ?")
-                    .bind(shortcut_id)
-                    .execute(&db)
-                    .await;
-
-                let (device, browser, os) = parse_user_agent(&user_agent);
-                let referer_domain = extract_domain(&referer);
-                let utm_source = extract_utm_param(&query, "utm_source");
-                let utm_medium = extract_utm_param(&query, "utm_medium");
-                let utm_campaign = extract_utm_param(&query, "utm_campaign");
-                let (country, city) = get_geo_from_ip(&ip).await;
-
-                let payload = serde_json::json!({
-                    "referer": referer,
-                    "referer_domain": referer_domain,
-                    "user_agent": user_agent,
-                    "device": device,
-                    "browser": browser,
-                    "os": os,
-                    "ip": ip,
-                    "country": country,
-                    "city": city,
-                    "utm_source": utm_source,
-                    "utm_medium": utm_medium,
-                    "utm_campaign": utm_campaign,
-                });
-
-                let _ = sqlx::query(
-                    "INSERT INTO activities (creator_id, created_ts, type, level, payload, shortcut_id, referer, user_agent, ip_country, ip_city, utm_source, utm_medium, utm_campaign) VALUES (?, ?, 'shortcut.view', 'info', ?, ?, ?, ?, ?, ?, ?, ?, ?)"
-                )
-                .bind(creator_id)
-                .bind(now)
-                .bind(payload.to_string())
-                .bind(shortcut_id)
-                .bind(&referer)
-                .bind(&user_agent)
-                .bind(&country)
-                .bind(&city)
-                .bind(&utm_source)
-                .bind(&utm_medium)
-                .bind(&utm_campaign)
-                .execute(&db)
-                .await;
-            });
-
-            // Redirect IMMEDIATELY - only waited for SELECT + dedup check
-            Ok(axum::response::Redirect::temporary(&target))
+            dedup.insert(dedup_key, now);
+            if dedup.len() > 10000 {
+                let cutoff = now - 120;
+                dedup.retain(|_, ts| *ts > cutoff);
+            }
         }
-        None => Err(StatusCode::NOT_FOUND),
-    }
+
+        // Increment view count
+        let _ = sqlx::query("UPDATE shortcuts SET view_count = view_count + 1 WHERE id = ?")
+            .bind(shortcut_id)
+            .execute(&db)
+            .await;
+
+        let (device, browser, os) = parse_user_agent(&user_agent);
+        let referer_domain = extract_domain(&referer);
+        let utm_source = extract_utm_param(&query, "utm_source");
+        let utm_medium = extract_utm_param(&query, "utm_medium");
+        let utm_campaign = extract_utm_param(&query, "utm_campaign");
+        let (country, city) = get_geo_from_ip(&ip).await;
+
+        let payload = serde_json::json!({
+            "referer": referer,
+            "referer_domain": referer_domain,
+            "user_agent": user_agent,
+            "device": device,
+            "browser": browser,
+            "os": os,
+            "ip": ip,
+            "country": country,
+            "city": city,
+            "utm_source": utm_source,
+            "utm_medium": utm_medium,
+            "utm_campaign": utm_campaign,
+        });
+
+        let _ = sqlx::query(
+            "INSERT INTO activities (creator_id, created_ts, type, level, payload, shortcut_id, referer, user_agent, ip_country, ip_city, utm_source, utm_medium, utm_campaign) VALUES (?, ?, 'shortcut.view', 'info', ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+        )
+        .bind(creator_id)
+        .bind(now)
+        .bind(payload.to_string())
+        .bind(shortcut_id)
+        .bind(&referer)
+        .bind(&user_agent)
+        .bind(&country)
+        .bind(&city)
+        .bind(&utm_source)
+        .bind(&utm_medium)
+        .bind(&utm_campaign)
+        .execute(&db)
+        .await;
+    });
+
+    redirect_resp
 }
 
 fn parse_user_agent(ua: &str) -> (String, String, String) {

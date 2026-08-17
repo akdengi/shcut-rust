@@ -20,12 +20,16 @@ use crate::config::Config;
 /// IP dedup cache: maps "shortcut_id:ip" -> last_view_timestamp
 pub type DedupCache = Arc<RwLock<HashMap<String, i64>>>;
 
+/// URL cache: maps shortcut name -> (id, target_url, creator_id)
+pub type UrlCache = Arc<RwLock<HashMap<String, (i64, String, i64)>>>;
+
 #[derive(Clone)]
 pub struct AppState {
     pub db: SqlitePool,
     pub config: Config,
     pub allow_registration: bool,
     pub view_dedup: DedupCache,
+    pub url_cache: UrlCache,
 }
 
 impl AppState {
@@ -35,6 +39,7 @@ impl AppState {
             config,
             allow_registration,
             view_dedup: Arc::new(RwLock::new(HashMap::new())),
+            url_cache: Arc::new(RwLock::new(HashMap::new())),
         }
     }
 }

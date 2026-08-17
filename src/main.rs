@@ -180,7 +180,20 @@ async fn main() {
     }
 
     // Build application state
-    let state = api::AppState::new(pool, cfg.clone(), cfg.allow_registration);
+    let state = api::AppState::new(pool.clone(), cfg.clone(), cfg.allow_registration);
+
+    // Pre-warm URL cache
+    {
+        let shortcuts = sqlx::query_as::<_, crate::db::models::Shortcut>("SELECT id, name, link, creator_id FROM shortcuts")
+            .fetch_all(&pool)
+            .await
+            .unwrap_or_default();
+        let mut cache = state.url_cache.write().await;
+        for s in &shortcuts {
+            cache.insert(s.name.clone(), (s.id, s.link.clone(), s.creator_id));
+        }
+        tracing::info!("URL cache warmed with {} shortcuts", cache.len());
+    }
 
     // CORS layer
     let cors = CorsLayer::new()

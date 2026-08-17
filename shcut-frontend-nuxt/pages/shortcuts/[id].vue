@@ -90,14 +90,14 @@
             <span v-for="label in yLabels" :key="label" class="text-[10px] text-gray-400">{{ label }}</span>
           </div>
           <!-- Chart bars -->
-          <div class="flex-1 flex items-end gap-1 h-32 border-l border-b border-gray-200 dark:border-gray-700 pl-1 pb-6">
+          <div class="flex-1 flex items-end gap-1 h-32 border-l border-b border-gray-200 dark:border-gray-700 pl-1">
             <div v-for="day in analytics.views_by_date.slice(-30)" :key="day.date" class="flex-1 relative min-w-0 h-full">
               <div
-                class="absolute bottom-6 left-0 right-0 bg-indigo-500 rounded-t hover:bg-indigo-600 transition-colors"
+                class="absolute bottom-0 left-0 right-0 bg-indigo-500 rounded-t hover:bg-indigo-600 transition-colors"
                 :style="{ height: day.count > 0 ? `${Math.max((day.count / maxViews) * 100, 4)}%` : '0' }"
                 :title="`${day.date}: ${day.count} views`"
               />
-              <span class="absolute bottom-0 left-1/2 -translate-x-1/2 text-[9px] text-gray-400 transform -rotate-45 origin-top-left whitespace-nowrap">{{ day.date.slice(5) }}</span>
+              <span class="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[9px] text-gray-400 transform -rotate-45 origin-top-left whitespace-nowrap">{{ day.date.slice(5) }}</span>
             </div>
           </div>
         </div>
