@@ -5,6 +5,15 @@
         <h1 class="text-2xl font-bold text-gray-900 dark:text-white">User Management</h1>
         <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Admin only</p>
       </div>
+      <button
+        @click="showCreateForm = true"
+        class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors"
+      >
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+        </svg>
+        New User
+      </button>
     </div>
 
     <!-- Loading -->
@@ -125,7 +134,7 @@
                     class="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors"
                   />
                 </div>
-                <div>
+                <div v-if="editingUser && editingUser.role !== 'admin' && editingUser.id !== currentUserId">
                   <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Role</label>
                   <select
                     v-model="editForm.role"
@@ -134,8 +143,8 @@
                     <option value="user">User - can create/edit shortcuts</option>
                     <option value="view">View - can only view shortcuts</option>
                   </select>
-                  <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Admin role cannot be assigned</p>
                 </div>
+
                 <div class="flex items-center justify-end gap-3 pt-2">
                   <button
                     type="button"
@@ -167,6 +176,84 @@
       @confirm="handleDelete"
       @cancel="deletingUser = null"
     />
+
+    <!-- Create User Modal -->
+    <Teleport to="body">
+      <Transition
+        enter-active-class="transition ease-out duration-200"
+        enter-from-class="opacity-0"
+        enter-to-class="opacity-100"
+        leave-active-class="transition ease-in duration-150"
+        leave-from-class="opacity-100"
+        leave-to-class="opacity-0"
+      >
+        <div v-if="showCreateForm" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div class="absolute inset-0 bg-black/50" @click="showCreateForm = false" />
+          <div class="relative bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full p-6">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Create User</h3>
+            <form @submit.prevent="handleCreate" class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nickname</label>
+                <input
+                  v-model="createForm.nickname"
+                  type="text"
+                  required
+                  class="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors"
+                  placeholder="John Doe"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
+                <input
+                  v-model="createForm.email"
+                  type="email"
+                  required
+                  class="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors"
+                  placeholder="john@example.com"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Password</label>
+                <input
+                  v-model="createForm.password"
+                  type="password"
+                  required
+                  minlength="6"
+                  class="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors"
+                  placeholder="Min 6 characters"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Role</label>
+                <select
+                  v-model="createForm.role"
+                  class="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2.5 text-sm text-gray-900 dark:text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors"
+                >
+                  <option value="user">User - can create/edit shortcuts</option>
+                  <option value="view">View - can only view shortcuts</option>
+                </select>
+              </div>
+              <div class="flex items-center justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  @click="showCreateForm = false"
+                  class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  :disabled="createSaving"
+                  class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+                >
+                  {{ createSaving ? 'Creating...' : 'Create' }}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>
 
@@ -192,6 +279,9 @@ const editingUser = ref<User | null>(null)
 const editForm = ref({ nickname: '', email: '', role: 'view' as string })
 const editSaving = ref(false)
 const deletingUser = ref<User | null>(null)
+const showCreateForm = ref(false)
+const createForm = ref({ nickname: '', email: '', password: '', role: 'view' as string })
+const createSaving = ref(false)
 
 const currentUserId = computed(() => authStore.user?.id)
 
@@ -233,6 +323,30 @@ const handleEditSave = async () => {
 
 const confirmDelete = (user: User) => {
   deletingUser.value = user
+}
+
+const handleCreate = async () => {
+  createSaving.value = true
+  try {
+    const newUser = await api.post<User>('/api/v1/users', {
+      nickname: createForm.value.nickname,
+      email: createForm.value.email,
+      password: createForm.value.password,
+      role: createForm.value.role,
+    })
+    users.value.unshift(newUser)
+    showCreateForm.value = false
+    createForm.value = { nickname: '', email: '', password: '', role: 'view' }
+    toast.success('User created')
+  } catch (e: any) {
+    if (e?.statusCode === 409) {
+      toast.error('User with this email already exists')
+    } else {
+      toast.error('Failed to create user')
+    }
+  } finally {
+    createSaving.value = false
+  }
 }
 
 const handleDelete = async () => {

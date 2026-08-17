@@ -2,7 +2,7 @@ use axum::{Router, middleware as axum_middleware};
 use sqlx::sqlite::SqlitePoolOptions;
 use std::net::SocketAddr;
 use tower_http::cors::{Any, CorsLayer};
-use tower_http::services::ServeDir;
+use tower_http::services::{ServeDir, ServeFile};
 use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
@@ -196,7 +196,11 @@ async fn main() {
     let app = Router::new()
         .merge(api::routes())
         // Serve static files (frontend) — falls back to index.html for SPA
-        .fallback_service(ServeDir::new(&static_dir).append_index_html_on_directories(true))
+        .fallback_service(
+            ServeDir::new(&static_dir)
+                .append_index_html_on_directories(true)
+                .not_found_service(ServeFile::new(format!("{}/index.html", static_dir)))
+        )
         .layer(axum_middleware::from_fn_with_state(
             state.clone(),
             api::middleware::auth_middleware,

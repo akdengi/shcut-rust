@@ -22,6 +22,14 @@ pub struct CreateUser {
 }
 
 #[derive(Debug, Deserialize)]
+pub struct AdminCreateUser {
+    pub email: String,
+    pub nickname: String,
+    pub password: String,
+    pub role: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
 pub struct UpdateUser {
     pub nickname: Option<String>,
     pub email: Option<String>,

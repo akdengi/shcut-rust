@@ -52,7 +52,7 @@
 
         <div v-if="registrationAllowed" class="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
           Don't have an account?
-          <NuxtLink to="/auth/register" class="text-blue-600 hover:text-blue-500 font-medium">Sign up</NuxtLink>
+          <NuxtLink to="/auth/signup" class="text-blue-600 hover:text-blue-500 font-medium">Sign up</NuxtLink>
         </div>
       </div>
     </div>

@@ -71,7 +71,7 @@ New users default to `view` role.
 | PUT | `/api/v1/settings` | Yes | admin | Update settings |
 | POST | `/api/v1/settings/logo` | Yes | admin | Upload logo (multipart, max 2MB) |
 
-**Settings fields:** `company_name`, `logo_url`, `analytics_enabled`, `analytics_geolocation`, `analytics_utm`, `analytics_referrer`
+**Settings fields:** `company_name`, `logo_url`
 
 ---
 

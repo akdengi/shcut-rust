@@ -31,10 +31,6 @@ pub async fn get_bool_setting(db: &sqlx::SqlitePool, key: &str, default: bool) -
 pub struct UpdateSettings {
     pub company_name: Option<String>,
     pub logo_url: Option<String>,
-    pub analytics_enabled: Option<bool>,
-    pub analytics_geolocation: Option<bool>,
-    pub analytics_utm: Option<bool>,
-    pub analytics_referrer: Option<bool>,
 }
 
 pub async fn get_settings(
@@ -73,46 +69,6 @@ pub async fn update_settings(
             "INSERT INTO workspace_settings (key, value) VALUES ('logo_url', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value"
         )
         .bind(url)
-        .execute(&state.db)
-        .await
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-    }
-
-    if let Some(enabled) = input.analytics_enabled {
-        sqlx::query(
-            "INSERT INTO workspace_settings (key, value) VALUES ('analytics_enabled', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value"
-        )
-        .bind(if enabled { "true" } else { "false" })
-        .execute(&state.db)
-        .await
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-    }
-
-    if let Some(geo) = input.analytics_geolocation {
-        sqlx::query(
-            "INSERT INTO workspace_settings (key, value) VALUES ('analytics_geolocation', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value"
-        )
-        .bind(if geo { "true" } else { "false" })
-        .execute(&state.db)
-        .await
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-    }
-
-    if let Some(utm) = input.analytics_utm {
-        sqlx::query(
-            "INSERT INTO workspace_settings (key, value) VALUES ('analytics_utm', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value"
-        )
-        .bind(if utm { "true" } else { "false" })
-        .execute(&state.db)
-        .await
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-    }
-
-    if let Some(referrer) = input.analytics_referrer {
-        sqlx::query(
-            "INSERT INTO workspace_settings (key, value) VALUES ('analytics_referrer', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value"
-        )
-        .bind(if referrer { "true" } else { "false" })
         .execute(&state.db)
         .await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;

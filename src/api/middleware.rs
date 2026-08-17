@@ -100,8 +100,11 @@ fn is_public_route(path: &str, method: &Method) -> bool {
         return true;
     }
 
-    // Tags (public read)
-    if path == "/api/v1/tags" {
+    // Tags (GET is public, POST/PUT/DELETE require auth)
+    if path == "/api/v1/tags" && method == Method::GET {
+        return true;
+    }
+    if path.starts_with("/api/v1/tags/") && path.ends_with("/shortcuts") && method == Method::GET {
         return true;
     }
 

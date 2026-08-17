@@ -417,22 +417,12 @@ pub async fn redirect(
                     .execute(&db)
                     .await;
 
-                // Check analytics settings
-                let analytics_enabled = super::settings::get_bool_setting(&db, "analytics_enabled", true).await;
-                if !analytics_enabled {
-                    return;
-                }
-
-                let collect_geo = super::settings::get_bool_setting(&db, "analytics_geolocation", true).await;
-                let collect_utm = super::settings::get_bool_setting(&db, "analytics_utm", true).await;
-                let collect_referrer = super::settings::get_bool_setting(&db, "analytics_referrer", true).await;
-
                 let (device, browser, os) = parse_user_agent(&user_agent);
-                let referer_domain = if collect_referrer { extract_domain(&referer) } else { "direct".to_string() };
-                let utm_source = if collect_utm { extract_utm_param(&query, "utm_source") } else { None };
-                let utm_medium = if collect_utm { extract_utm_param(&query, "utm_medium") } else { None };
-                let utm_campaign = if collect_utm { extract_utm_param(&query, "utm_campaign") } else { None };
-                let (country, city) = if collect_geo { get_geo_from_ip(&ip).await } else { (None, None) };
+                let referer_domain = extract_domain(&referer);
+                let utm_source = extract_utm_param(&query, "utm_source");
+                let utm_medium = extract_utm_param(&query, "utm_medium");
+                let utm_campaign = extract_utm_param(&query, "utm_campaign");
+                let (country, city) = get_geo_from_ip(&ip).await;
 
                 let now = Utc::now().timestamp();
                 let payload = serde_json::json!({

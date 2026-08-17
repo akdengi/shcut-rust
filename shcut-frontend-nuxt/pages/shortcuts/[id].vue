@@ -67,7 +67,7 @@
           <p class="text-sm text-gray-500 dark:text-gray-400">Total Views</p>
           <p class="mt-1 text-2xl font-bold text-gray-900 dark:text-white">{{ shortcut.view_count }}</p>
         </div>
-        <div v-if="settings.analytics_geolocation === 'true'" class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
           <p class="text-sm text-gray-500 dark:text-gray-400">Countries</p>
           <p class="mt-1 text-2xl font-bold text-gray-900 dark:text-white">{{ analytics?.countries?.length || 0 }}</p>
         </div>
@@ -75,7 +75,7 @@
           <p class="text-sm text-gray-500 dark:text-gray-400">Browsers</p>
           <p class="mt-1 text-2xl font-bold text-gray-900 dark:text-white">{{ analytics?.browsers?.length || 0 }}</p>
         </div>
-        <div v-if="settings.analytics_referrer === 'true'" class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
           <p class="text-sm text-gray-500 dark:text-gray-400">Referrers</p>
           <p class="mt-1 text-2xl font-bold text-gray-900 dark:text-white">{{ analytics?.references?.length || 0 }}</p>
         </div>
@@ -87,11 +87,7 @@
         <div class="flex gap-2">
           <!-- Y-axis labels -->
           <div class="flex flex-col justify-between h-32 text-right w-8">
-            <span class="text-[10px] text-gray-400">{{ maxViews }}</span>
-            <span class="text-[10px] text-gray-400">{{ Math.round(maxViews * 0.75) }}</span>
-            <span class="text-[10px] text-gray-400">{{ Math.round(maxViews * 0.5) }}</span>
-            <span class="text-[10px] text-gray-400">{{ Math.round(maxViews * 0.25) }}</span>
-            <span class="text-[10px] text-gray-400">0</span>
+            <span v-for="label in yLabels" :key="label" class="text-[10px] text-gray-400">{{ label }}</span>
           </div>
           <!-- Chart bars -->
           <div class="flex-1 flex items-end gap-1 h-32 border-l border-b border-gray-200 dark:border-gray-700 pl-1 pb-6">
@@ -135,7 +131,7 @@
           </div>
         </div>
 
-        <div v-if="settings.analytics_geolocation === 'true' && analytics?.countries?.length" class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
+        <div v-if="analytics?.countries?.length" class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
           <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-3">Countries</h3>
           <div class="space-y-2">
             <div v-for="item in analytics.countries" :key="item.name" class="flex items-center justify-between">
@@ -145,7 +141,7 @@
           </div>
         </div>
 
-        <div v-if="settings.analytics_referrer === 'true' && analytics?.references?.length" class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
+        <div v-if="analytics?.references?.length" class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
           <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-3">Referrers</h3>
           <div class="space-y-2">
             <div v-for="item in analytics.references" :key="item.name" class="flex items-center justify-between">
@@ -155,7 +151,7 @@
           </div>
         </div>
 
-        <div v-if="settings.analytics_utm === 'true' && analytics?.utm_sources?.length" class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
+        <div v-if="analytics?.utm_sources?.length" class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
           <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-3">UTM Sources</h3>
           <div class="space-y-2">
             <div v-for="item in analytics.utm_sources" :key="item.name" class="flex items-center justify-between">
@@ -177,22 +173,22 @@
               <tr class="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
                 <th class="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Time</th>
                 <th class="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">IP</th>
-                <th v-if="settings.analytics_geolocation === 'true'" class="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Country</th>
+                <th class="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Country</th>
                 <th class="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Device</th>
                 <th class="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">OS</th>
                 <th class="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Browser</th>
-                <th v-if="settings.analytics_referrer === 'true'" class="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Referrer</th>
+                <th class="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Referrer</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
               <tr v-for="activity in activities" :key="activity.id" class="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                 <td class="px-4 py-3 text-gray-500 dark:text-gray-400 text-xs whitespace-nowrap">{{ formatTime(activity.created_ts) }}</td>
                 <td class="px-4 py-3 text-gray-500 dark:text-gray-400 text-xs font-mono">{{ activity.ip || '—' }}</td>
-                <td v-if="settings.analytics_geolocation === 'true'" class="px-4 py-3 text-gray-500 dark:text-gray-400 text-xs">{{ activity.country || '—' }}</td>
+                <td class="px-4 py-3 text-gray-500 dark:text-gray-400 text-xs">{{ activity.country || '—' }}</td>
                 <td class="px-4 py-3 text-gray-500 dark:text-gray-400 text-xs">{{ activity.device || '—' }}</td>
                 <td class="px-4 py-3 text-gray-500 dark:text-gray-400 text-xs">{{ activity.os || '—' }}</td>
                 <td class="px-4 py-3 text-gray-500 dark:text-gray-400 text-xs">{{ activity.browser || '—' }}</td>
-                <td v-if="settings.analytics_referrer === 'true'" class="px-4 py-3 text-gray-500 dark:text-gray-400 text-xs truncate max-w-[150px]">{{ activity.referer_domain || 'Direct' }}</td>
+                <td class="px-4 py-3 text-gray-500 dark:text-gray-400 text-xs truncate max-w-[150px]">{{ activity.referer_domain || 'Direct' }}</td>
               </tr>
             </tbody>
           </table>
@@ -249,7 +245,6 @@ const showResetConfirm = ref(false)
 const analytics = ref<ShortcutAnalytics | null>(null)
 const activities = ref<any[]>([])
 const copied = ref(false)
-const settings = ref<Record<string, string>>({})
 const dateFrom = ref('')
 const dateTo = ref('')
 
@@ -262,7 +257,17 @@ const shortcut = computed(() => shortcutsStore.current)
 
 const maxViews = computed(() => {
   if (!analytics.value?.views_by_date?.length) return 1
-  return Math.max(...analytics.value.views_by_date.map(d => d.count), 1)
+  const max = Math.max(...analytics.value.views_by_date.map(d => d.count), 1)
+  return Math.ceil(max)
+})
+
+const yLabels = computed(() => {
+  const max = maxViews.value
+  if (max <= 1) return [1, 0]
+  if (max <= 5) return Array.from({ length: max + 1 }, (_, i) => max - i)
+  const step = Math.ceil(max / 4)
+  const top = step * 4
+  return [top, top - step, top - step * 2, top - step * 3, 0]
 })
 
 const formatTime = (ts: number) => new Date(ts * 1000).toLocaleString()
@@ -298,11 +303,7 @@ onMounted(async () => {
   const id = Number(route.params.id)
   try {
     await shortcutsStore.fetchShortcut(id)
-    const [settingsData] = await Promise.all([
-      $fetch<Record<string, string>>('/api/v1/settings'),
-      loadAnalytics(),
-    ])
-    settings.value = settingsData
+    await loadAnalytics()
   } catch {
     toast.error('Failed to load shortcut')
     await navigateTo('/')
@@ -320,7 +321,15 @@ const copyLink = async () => {
     toast.success('Link copied')
     setTimeout(() => { copied.value = false }, 2000)
   } catch {
-    // fallback
+    const input = document.createElement('input')
+    input.value = link
+    document.body.appendChild(input)
+    input.select()
+    document.execCommand('copy')
+    document.body.removeChild(input)
+    copied.value = true
+    toast.success('Link copied')
+    setTimeout(() => { copied.value = false }, 2000)
   }
 }
 

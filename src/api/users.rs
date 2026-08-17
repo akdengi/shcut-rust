@@ -4,9 +4,16 @@ use axum::{
     Json,
 };
 use chrono::Utc;
+use argon2::{
+    password_hash::{
+        rand_core::OsRng,
+        SaltString,
+    },
+    PasswordHasher,
+};
 
 use super::{AppState, auth_extractor::AuthClaims};
-use crate::db::models::{User, UpdateUser};
+use crate::db::models::{User, UpdateUser, AdminCreateUser};
 
 pub async fn list(
     State(state): State<AppState>,
@@ -31,6 +38,83 @@ pub async fn list(
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
     Ok(Json(users))
+}
+
+pub async fn create(
+    State(state): State<AppState>,
+    auth: AuthClaims,
+    Json(input): Json<AdminCreateUser>,
+) -> Result<Json<User>, StatusCode> {
+    let user_id: i64 = auth.0.sub.parse().map_err(|_| StatusCode::UNAUTHORIZED)?;
+
+    // Check if user is admin
+    let role = sqlx::query_scalar::<_, String>("SELECT role FROM users WHERE id = ?")
+        .bind(user_id)
+        .fetch_one(&state.db)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    if role != "admin" {
+        return Err(StatusCode::FORBIDDEN);
+    }
+
+    // Validate input
+    if input.email.is_empty() || input.password.is_empty() || input.nickname.is_empty() {
+        return Err(StatusCode::BAD_REQUEST);
+    }
+
+    if input.password.len() < 6 {
+        return Err(StatusCode::BAD_REQUEST);
+    }
+
+    // Check if user already exists
+    let existing = sqlx::query_scalar::<_, i64>("SELECT id FROM users WHERE email = ?")
+        .bind(&input.email)
+        .fetch_optional(&state.db)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    if existing.is_some() {
+        return Err(StatusCode::CONFLICT);
+    }
+
+    // Hash password
+    let salt = SaltString::generate(&mut OsRng);
+    let argon2 = argon2::Argon2::default();
+    let password_hash = argon2
+        .hash_password(input.password.as_bytes(), &salt)
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
+        .to_string();
+
+    // Determine role (admin cannot assign admin)
+    let new_role = match input.role.as_deref() {
+        Some("user") => "user",
+        Some("view") | None => "view",
+        _ => return Err(StatusCode::BAD_REQUEST),
+    };
+
+    let now = Utc::now().timestamp();
+
+    let result = sqlx::query(
+        "INSERT INTO users (email, nickname, password_hash, role, created_ts, updated_ts) VALUES (?, ?, ?, ?, ?, ?)",
+    )
+    .bind(&input.email)
+    .bind(&input.nickname)
+    .bind(&password_hash)
+    .bind(new_role)
+    .bind(now)
+    .bind(now)
+    .execute(&state.db)
+    .await
+    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    let user = sqlx::query_as::<_, User>("SELECT * FROM users WHERE id = ?")
+        .bind(result.last_insert_rowid())
+        .fetch_one(&state.db)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    Ok(Json(user))
 }
 
 pub async fn update(

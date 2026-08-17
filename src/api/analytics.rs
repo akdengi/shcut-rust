@@ -7,7 +7,6 @@ use serde::Deserialize;
 use tracing::error;
 
 use super::AppState;
-use super::settings::get_bool_setting;
 use crate::db::models::{Activity, ShortcutAnalytics, AnalyticsItem, ActivityEntry, ViewsByDate};
 
 #[derive(Debug, Deserialize)]
@@ -21,25 +20,6 @@ pub async fn shortcut_analytics(
     Path(id): Path<i64>,
     Query(params): Query<AnalyticsQuery>,
 ) -> Result<Json<ShortcutAnalytics>, StatusCode> {
-    // Check analytics enabled
-    let analytics_enabled = get_bool_setting(&state.db, "analytics_enabled", true).await;
-    if !analytics_enabled {
-        return Ok(Json(ShortcutAnalytics {
-            view_count: 0,
-            references: vec![],
-            devices: vec![],
-            browsers: vec![],
-            os: vec![],
-            countries: vec![],
-            cities: vec![],
-            utm_sources: vec![],
-            utm_mediums: vec![],
-            utm_campaigns: vec![],
-            activities: vec![],
-            views_by_date: vec![],
-        }));
-    }
-
     // Get shortcut and check existence
     let shortcut = sqlx::query_scalar::<_, i64>("SELECT view_count FROM shortcuts WHERE id = ?")
         .bind(id)
@@ -51,11 +31,6 @@ pub async fn shortcut_analytics(
         Some(v) => v,
         None => return Err(StatusCode::NOT_FOUND),
     };
-
-    // Check individual settings
-    let collect_geo = get_bool_setting(&state.db, "analytics_geolocation", true).await;
-    let collect_utm = get_bool_setting(&state.db, "analytics_utm", true).await;
-    let collect_referrer = get_bool_setting(&state.db, "analytics_referrer", true).await;
 
     // Build query with date range
     let mut query = "SELECT * FROM activities WHERE shortcut_id = ? AND type = 'shortcut.view'".to_string();
@@ -126,54 +101,48 @@ pub async fn shortcut_analytics(
                 ip = Some(i.to_string());
             }
 
-            // Referrer (only if enabled)
-            if collect_referrer {
-                if let Some(r) = payload.get("referer").and_then(|v| v.as_str()) {
-                    if r != "direct" {
-                        *reference_map.entry(r.to_string()).or_insert(0) += 1;
-                        referer = Some(r.to_string());
-                    }
+            // Referrer
+            if let Some(r) = payload.get("referer").and_then(|v| v.as_str()) {
+                if r != "direct" {
+                    *reference_map.entry(r.to_string()).or_insert(0) += 1;
+                    referer = Some(r.to_string());
                 }
-                if let Some(rd) = payload.get("referer_domain").and_then(|v| v.as_str()) {
-                    referer_domain = Some(rd.to_string());
+            }
+            if let Some(rd) = payload.get("referer_domain").and_then(|v| v.as_str()) {
+                referer_domain = Some(rd.to_string());
+            }
+
+            // Country/City
+            if let Some(c) = payload.get("country").and_then(|v| v.as_str()) {
+                if !c.is_empty() {
+                    *country_map.entry(c.to_string()).or_insert(0) += 1;
+                    country = Some(c.to_string());
+                }
+            }
+            if let Some(c) = payload.get("city").and_then(|v| v.as_str()) {
+                if !c.is_empty() {
+                    *city_map.entry(c.to_string()).or_insert(0) += 1;
+                    city = Some(c.to_string());
                 }
             }
 
-            // Country/City (only if geolocation enabled)
-            if collect_geo {
-                if let Some(c) = payload.get("country").and_then(|v| v.as_str()) {
-                    if !c.is_empty() {
-                        *country_map.entry(c.to_string()).or_insert(0) += 1;
-                        country = Some(c.to_string());
-                    }
-                }
-                if let Some(c) = payload.get("city").and_then(|v| v.as_str()) {
-                    if !c.is_empty() {
-                        *city_map.entry(c.to_string()).or_insert(0) += 1;
-                        city = Some(c.to_string());
-                    }
+            // UTM
+            if let Some(us) = payload.get("utm_source").and_then(|v| v.as_str()) {
+                if !us.is_empty() {
+                    *utm_source_map.entry(us.to_string()).or_insert(0) += 1;
+                    utm_source = Some(us.to_string());
                 }
             }
-
-            // UTM (only if enabled)
-            if collect_utm {
-                if let Some(us) = payload.get("utm_source").and_then(|v| v.as_str()) {
-                    if !us.is_empty() {
-                        *utm_source_map.entry(us.to_string()).or_insert(0) += 1;
-                        utm_source = Some(us.to_string());
-                    }
+            if let Some(um) = payload.get("utm_medium").and_then(|v| v.as_str()) {
+                if !um.is_empty() {
+                    *utm_medium_map.entry(um.to_string()).or_insert(0) += 1;
+                    utm_medium = Some(um.to_string());
                 }
-                if let Some(um) = payload.get("utm_medium").and_then(|v| v.as_str()) {
-                    if !um.is_empty() {
-                        *utm_medium_map.entry(um.to_string()).or_insert(0) += 1;
-                        utm_medium = Some(um.to_string());
-                    }
-                }
-                if let Some(uc) = payload.get("utm_campaign").and_then(|v| v.as_str()) {
-                    if !uc.is_empty() {
-                        *utm_campaign_map.entry(uc.to_string()).or_insert(0) += 1;
-                        utm_campaign = Some(uc.to_string());
-                    }
+            }
+            if let Some(uc) = payload.get("utm_campaign").and_then(|v| v.as_str()) {
+                if !uc.is_empty() {
+                    *utm_campaign_map.entry(uc.to_string()).or_insert(0) += 1;
+                    utm_campaign = Some(uc.to_string());
                 }
             }
         }
@@ -210,15 +179,15 @@ pub async fn shortcut_analytics(
 
     Ok(Json(ShortcutAnalytics {
         view_count,
-        references: if collect_referrer { map_to_analytics(reference_map) } else { vec![] },
+        references: map_to_analytics(reference_map),
         devices: map_to_analytics(device_map),
         browsers: map_to_analytics(browser_map),
         os: map_to_analytics(os_map),
-        countries: if collect_geo { map_to_analytics(country_map) } else { vec![] },
-        cities: if collect_geo { map_to_analytics(city_map) } else { vec![] },
-        utm_sources: if collect_utm { map_to_analytics(utm_source_map) } else { vec![] },
-        utm_mediums: if collect_utm { map_to_analytics(utm_medium_map) } else { vec![] },
-        utm_campaigns: if collect_utm { map_to_analytics(utm_campaign_map) } else { vec![] },
+        countries: map_to_analytics(country_map),
+        cities: map_to_analytics(city_map),
+        utm_sources: map_to_analytics(utm_source_map),
+        utm_mediums: map_to_analytics(utm_medium_map),
+        utm_campaigns: map_to_analytics(utm_campaign_map),
         activities: activity_log,
         views_by_date,
     }))
