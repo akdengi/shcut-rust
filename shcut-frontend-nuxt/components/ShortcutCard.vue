@@ -4,9 +4,6 @@
       <div class="min-w-0 flex-1">
         <!-- Name -->
         <div class="flex items-center gap-2">
-          <span v-if="index !== undefined" class="text-xs font-mono text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded">
-            {{ index }}
-          </span>
           <span class="text-lg font-semibold text-indigo-600 dark:text-indigo-400 truncate">
             /{{ shortcut.name }}
           </span>
@@ -159,7 +156,6 @@ const copyLink = async () => {
 
 const props = defineProps<{
   shortcut: ShortcutWithTags
-  index?: number
 }>()
 
 defineEmits<{

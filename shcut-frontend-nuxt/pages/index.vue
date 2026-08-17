@@ -101,10 +101,9 @@
       <!-- Cards view -->
       <div v-else-if="viewMode === 'cards'" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <ShortcutCard
-          v-for="(shortcut, idx) in sortedItems"
+          v-for="shortcut in sortedItems"
           :key="shortcut.id"
           :shortcut="shortcut"
-          :index="(shortcutsStore.page - 1) * (shortcutsStore.perPage || shortcutsStore.total) + idx + 1"
           @edit="editShortcut"
           @delete="confirmDelete"
           @stats="openStats"
@@ -234,12 +233,42 @@
         </div>
       </div>
 
-      <!-- Pagination -->
-      <div v-if="perPage > 0 && shortcutsStore.totalPages > 1" class="mt-6 flex items-center justify-between">
-        <p class="text-sm text-gray-500 dark:text-gray-400">
-          {{ shortcutsStore.total }} shortcuts
-        </p>
-        <nav class="flex items-center gap-2">
+      <!-- Pagination & Sort -->
+      <div class="mt-6 flex items-center justify-between">
+        <div class="flex items-center gap-4">
+          <p class="text-sm text-gray-500 dark:text-gray-400">
+            {{ shortcutsStore.total }} shortcuts
+          </p>
+          <div class="flex items-center gap-1 border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden">
+            <button
+              @click="toggleSort('id')"
+              :class="[
+                'px-3 py-1.5 text-sm font-medium transition-colors',
+                sortField === 'id'
+                  ? 'bg-indigo-600 text-white'
+                  : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
+              ]"
+              :title="sortField === 'id' ? (sortDir === 'asc' ? 'Sorted ID ↑' : 'Sorted ID ↓') : 'Sort by ID'"
+            >
+              ID
+              <span v-if="sortField === 'id'" class="ml-1">{{ sortDir === 'asc' ? '↑' : '↓' }}</span>
+            </button>
+            <button
+              @click="toggleSort('name')"
+              :class="[
+                'px-3 py-1.5 text-sm font-medium transition-colors',
+                sortField === 'name'
+                  ? 'bg-indigo-600 text-white'
+                  : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
+              ]"
+              :title="sortField === 'name' ? (sortDir === 'asc' ? 'Sorted Name ↑' : 'Sorted Name ↓') : 'Sort by Name'"
+            >
+              Name
+              <span v-if="sortField === 'name'" class="ml-1">{{ sortDir === 'asc' ? '↑' : '↓' }}</span>
+            </button>
+          </div>
+        </div>
+        <nav v-if="perPage > 0 && shortcutsStore.totalPages > 1" class="flex items-center gap-2">
           <button
             @click="changePage(shortcutsStore.page - 1)"
             :disabled="shortcutsStore.page <= 1"
