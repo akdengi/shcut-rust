@@ -284,7 +284,7 @@ definePageMeta({ middleware: 'auth' })
 
 const shortcutsStore = useShortcutsStore()
 const authStore = useAuthStore()
-const { success } = useToast()
+const { success, error: showError } = useToast()
 
 const viewMode = ref<'cards' | 'table'>('cards')
 const perPage = ref(0)
@@ -392,7 +392,11 @@ const handleShortcutSubmit = async (payload: ShortcutCreatePayload) => {
     closeDrawer()
     loadTags()
   } catch (e: any) {
-    // error shown in toast
+    if (e?.statusCode === 409) {
+      showError('Shortcut with this name already exists')
+    } else {
+      showError(e?.data?.message || 'Failed to save shortcut')
+    }
   } finally {
     submitting.value = false
   }
