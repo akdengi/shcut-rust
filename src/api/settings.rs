@@ -9,24 +9,6 @@ use std::path::PathBuf;
 
 use super::{AppState, auth_extractor::AuthClaims};
 
-/// Get a boolean setting from the database (defaults to true if not set)
-pub async fn get_bool_setting(db: &sqlx::SqlitePool, key: &str, default: bool) -> bool {
-    let value = sqlx::query_scalar::<_, String>(
-        "SELECT value FROM workspace_settings WHERE key = ?"
-    )
-    .bind(key)
-    .fetch_optional(db)
-    .await
-    .ok()
-    .flatten();
-
-    match value.as_deref() {
-        Some("true") => true,
-        Some("false") => false,
-        _ => default,
-    }
-}
-
 #[derive(Debug, Deserialize)]
 pub struct UpdateSettings {
     pub company_name: Option<String>,
