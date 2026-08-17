@@ -35,7 +35,7 @@
           </a>
         </div>
         <div class="flex items-center gap-2 shrink-0">
-          <button @click="showEditForm = true" class="px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">Edit</button>
+          <button v-if="authStore.canEdit" @click="showEditForm = true" class="px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">Edit</button>
           <button v-if="authStore.canDelete" @click="showDeleteConfirm = true" class="px-3 py-2 text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors">Delete</button>
         </div>
       </div>
@@ -91,9 +91,13 @@
           </div>
           <!-- Chart bars -->
           <div class="flex-1 flex items-end gap-1 h-32 border-l border-b border-gray-200 dark:border-gray-700 pl-1 pb-6">
-            <div v-for="day in analytics.views_by_date.slice(-30)" :key="day.date" class="flex-1 flex flex-col items-center gap-1 min-w-0">
-              <div class="w-full bg-indigo-500 rounded-t hover:bg-indigo-600 transition-colors" :style="{ height: `${(day.count / maxViews) * 100}%`, minHeight: day.count > 0 ? '4px' : '0' }" :title="`${day.date}: ${day.count} views`" />
-              <span class="text-[9px] text-gray-400 transform -rotate-45 origin-top-left whitespace-nowrap">{{ day.date.slice(5) }}</span>
+            <div v-for="day in analytics.views_by_date.slice(-30)" :key="day.date" class="flex-1 relative min-w-0 h-full">
+              <div
+                class="absolute bottom-6 left-0 right-0 bg-indigo-500 rounded-t hover:bg-indigo-600 transition-colors"
+                :style="{ height: day.count > 0 ? `${Math.max((day.count / maxViews) * 100, 4)}%` : '0' }"
+                :title="`${day.date}: ${day.count} views`"
+              />
+              <span class="absolute bottom-0 left-1/2 -translate-x-1/2 text-[9px] text-gray-400 transform -rotate-45 origin-top-left whitespace-nowrap">{{ day.date.slice(5) }}</span>
             </div>
           </div>
         </div>

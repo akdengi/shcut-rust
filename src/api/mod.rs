@@ -10,15 +10,22 @@ pub mod settings;
 use axum::{Router, routing::{get, post, put}, Json};
 use serde_json::{json, Value};
 use sqlx::SqlitePool;
+use std::collections::HashMap;
+use std::sync::Arc;
+use tokio::sync::RwLock;
 use tower_http::services::ServeDir;
 
 use crate::config::Config;
+
+/// IP dedup cache: maps "shortcut_id:ip" -> last_view_timestamp
+pub type DedupCache = Arc<RwLock<HashMap<String, i64>>>;
 
 #[derive(Clone)]
 pub struct AppState {
     pub db: SqlitePool,
     pub config: Config,
     pub allow_registration: bool,
+    pub view_dedup: DedupCache,
 }
 
 impl AppState {
@@ -27,6 +34,7 @@ impl AppState {
             db,
             config,
             allow_registration,
+            view_dedup: Arc::new(RwLock::new(HashMap::new())),
         }
     }
 }

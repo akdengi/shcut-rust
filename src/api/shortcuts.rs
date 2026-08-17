@@ -406,6 +406,26 @@ pub async fn redirect(
             let ip = addr.ip().to_string();
             let query = uri.query().unwrap_or("").to_string();
 
+            // Dedup: skip if same IP viewed this shortcut within last 60s
+            let dedup_key = format!("{}:{}", s.id, ip);
+            let now = Utc::now().timestamp();
+            {
+                let mut dedup = state.view_dedup.write().await;
+                if let Some(last_seen) = dedup.get(&dedup_key) {
+                    if now - last_seen < 60 {
+                        // Recent view from same IP, skip counting but still redirect
+                        return Ok(axum::response::Redirect::temporary(&target));
+                    }
+                }
+                dedup.insert(dedup_key, now);
+
+                // Cleanup old entries (keep last 10k)
+                if dedup.len() > 10000 {
+                    let cutoff = now - 120;
+                    dedup.retain(|_, ts| *ts > cutoff);
+                }
+            }
+
             // ALL database work in background - redirect is instant
             let db = state.db.clone();
             let creator_id = s.creator_id;
@@ -424,7 +444,6 @@ pub async fn redirect(
                 let utm_campaign = extract_utm_param(&query, "utm_campaign");
                 let (country, city) = get_geo_from_ip(&ip).await;
 
-                let now = Utc::now().timestamp();
                 let payload = serde_json::json!({
                     "referer": referer,
                     "referer_domain": referer_domain,
@@ -458,7 +477,7 @@ pub async fn redirect(
                 .await;
             });
 
-            // Redirect IMMEDIATELY - only waited for SELECT
+            // Redirect IMMEDIATELY - only waited for SELECT + dedup check
             Ok(axum::response::Redirect::temporary(&target))
         }
         None => Err(StatusCode::NOT_FOUND),
@@ -536,20 +555,19 @@ async fn get_geo_from_ip(ip: &str) -> (Option<String>, Option<String>) {
         return (None, None);
     }
 
-    // Call ip-api.com (free, no key needed, rate limited to 45 req/min)
+    // Call ip-api.com with 2s timeout to avoid blocking
     let url = format!("http://ip-api.com/json/{}?fields=country,city", ip);
-    match reqwest::get(&url).await {
-        Ok(resp) => {
-            match resp.json::<serde_json::Value>().await {
-                Ok(data) => {
-                    let country = data.get("country").and_then(|v| v.as_str()).map(|s| s.to_string());
-                    let city = data.get("city").and_then(|v| v.as_str()).map(|s| s.to_string());
-                    (country, city)
-                }
-                Err(_) => (None, None),
-            }
+    let result = tokio::time::timeout(std::time::Duration::from_secs(2), async {
+        reqwest::get(&url).await.ok()?.json::<serde_json::Value>().await.ok()
+    }).await;
+
+    match result {
+        Ok(Some(data)) => {
+            let country = data.get("country").and_then(|v| v.as_str()).map(|s| s.to_string());
+            let city = data.get("city").and_then(|v| v.as_str()).map(|s| s.to_string());
+            (country, city)
         }
-        Err(_) => (None, None),
+        _ => (None, None),
     }
 }
 

@@ -65,6 +65,7 @@
           </svg>
         </a>
         <button
+          v-if="authStore.canEdit"
           @click="$emit('edit', shortcut)"
           class="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors opacity-0 group-hover:opacity-100"
           title="Edit"
@@ -74,6 +75,7 @@
           </svg>
         </button>
         <button
+          v-if="authStore.canDelete"
           @click="$emit('delete', shortcut)"
           class="p-1.5 rounded-lg text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors opacity-0 group-hover:opacity-100"
           title="Delete"
@@ -121,6 +123,8 @@
 
 <script setup lang="ts">
 import type { ShortcutWithTags } from '~/types/api'
+
+const authStore = useAuthStore()
 
 const serverUrl = computed(() => {
   if (import.meta.client) {
