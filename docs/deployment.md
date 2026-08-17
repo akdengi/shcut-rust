@@ -51,6 +51,13 @@ See `.env.example` for all available options. Key variables:
 | `ADMIN_PASSWORD` | No | Admin password (required if ADMIN_EMAIL set) |
 | `ALLOW_REGISTRATION` | No | Allow public user registration (default: false) |
 
+## Performance Features
+
+- **URL Cache** — in-memory cache for instant redirects (warmed on startup)
+- **IP Dedup** — prevents duplicate view counts within 60 seconds
+- **Background Analytics** — redirect happens immediately, stats collected in background
+- **Geo Timeout** — IP geolocation has 2s timeout to prevent slowdowns
+
 ## Data Persistence
 
 Data is stored in `./data/` directory:

@@ -107,7 +107,7 @@ Countries require geolocation to be enabled in Settings → Analytics Settings. 
 
 ### Delete (admin only)
 
-- Click trash icon → confirm deletion
+- Click trash icon → confirm deletion in dialog
 
 ### View Stats
 
@@ -128,27 +128,12 @@ Countries require geolocation to be enabled in Settings → Analytics Settings. 
 - Filter shortcuts by tag using the dropdown above the list
 - Click a tag on any shortcut card to filter by that tag
 
-### Managing Tags (admin only)
+### Managing Tags
 
 Go to **Settings → Tag Management**:
 - Create new tags
 - Rename existing tags (updates all shortcuts)
-- Delete tags (removes from all shortcuts)
-
----
-
-## Analytics Settings (admin only)
-
-Go to **Settings → Analytics Settings**:
-
-| Setting | Description | Default |
-|---------|-------------|---------|
-| **Analytics** | Master on/off toggle | On |
-| **Geolocation** | Detect country from IP (adds ~100ms latency) | On |
-| **UTM Parameters** | Track utm_source/medium/campaign from URLs | On |
-| **Referrer Tracking** | Track which website visitor came from | On |
-
-> Disabling geolocation speeds up redirects.
+- Delete tags with confirmation dialog (removes from all shortcuts)
 
 ---
 
@@ -184,3 +169,5 @@ Go to **Settings → Workspace Settings**:
 - **Pagination:** choose "All" in the dropdown to show all shortcuts, or select a number for paginated view
 - **Analytics period:** use date range filter on stats page to analyze specific time periods
 - **Reset analytics:** admin can reset all analytics data for a shortcut from the stats page
+- **Close settings:** click the X button in top-right corner to return to main page
+- **Loading indicators:** buttons show "Saving...", "Creating...", etc. while requests are in progress

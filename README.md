@@ -7,11 +7,11 @@ Self-hosted URL shortener built with Rust and Nuxt 3.
 - **Short URLs** — custom short links with `/s/name` redirects (instant, non-blocking analytics)
 - **Tags** — organize shortcuts, filter by tag, manage tags in settings
 - **Analytics** — views, devices, browsers, OS, countries, referrers, UTM, activity log
-- **Configurable analytics** — toggle geolocation, UTM, referrer tracking
 - **Workspace settings** — company name, logo upload
 - **Roles** — admin, user (create/edit), view (read-only)
 - **JWT auth** — secure authentication with admin seeding from .env
 - **Dark mode** — automatic theme switching
+- **Instant redirects** — URL cache for zero-latency redirects
 
 ## Tech Stack
 

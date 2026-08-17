@@ -56,9 +56,9 @@ New users default to `view` role.
 | Method | Endpoint | Auth | Role | Description |
 |--------|----------|------|------|-------------|
 | GET | `/api/v1/tags` | No | — | List all tags with shortcut count |
-| POST | `/api/v1/tags` | Yes | admin | Create tag |
-| PUT | `/api/v1/tags/:id` | Yes | admin | Rename tag |
-| DELETE | `/api/v1/tags/:id` | Yes | admin | Delete tag (removes from shortcuts) |
+| POST | `/api/v1/tags` | Yes | any | Create tag |
+| PUT | `/api/v1/tags/:id` | Yes | any | Rename tag |
+| DELETE | `/api/v1/tags/:id` | Yes | any | Delete tag (removes from shortcuts) |
 | GET | `/api/v1/tags/:name/shortcuts` | No | — | Get shortcuts by tag |
 
 ---
@@ -80,6 +80,7 @@ New users default to `view` role.
 | Method | Endpoint | Auth | Role | Description |
 |--------|----------|------|------|-------------|
 | GET | `/api/v1/users` | Yes | admin | List users |
+| POST | `/api/v1/users` | Yes | admin | Create user |
 | PUT | `/api/v1/users/:id` | Yes | admin (any), user (self) | Update user |
 | DELETE | `/api/v1/users/:id` | Yes | admin | Delete user |
 
