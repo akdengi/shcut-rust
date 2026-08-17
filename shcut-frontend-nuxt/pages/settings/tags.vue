@@ -76,11 +76,11 @@
                 class="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors"
               />
               <div class="flex items-center justify-end gap-3 mt-4">
-                <button type="button" @click="showCreateForm = false" class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                <button type="button" @click="showCreateForm = false" :disabled="creating" class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50">
                   Cancel
                 </button>
-                <button type="submit" :disabled="!newTagName.trim()" class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors">
-                  Create
+                <button type="submit" :disabled="!newTagName.trim() || creating" class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors">
+                  {{ creating ? 'Creating...' : 'Create' }}
                 </button>
               </div>
             </form>
@@ -105,11 +105,11 @@
                 class="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors"
               />
               <div class="flex items-center justify-end gap-3 mt-4">
-                <button type="button" @click="renamingTag = null" class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                <button type="button" @click="renamingTag = null" :disabled="renaming" class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50">
                   Cancel
                 </button>
-                <button type="submit" :disabled="!renameName.trim()" class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors">
-                  Rename
+                <button type="submit" :disabled="!renameName.trim() || renaming" class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors">
+                  {{ renaming ? 'Renaming...' : 'Rename' }}
                 </button>
               </div>
             </form>
@@ -125,6 +125,7 @@
       :message="`Are you sure you want to delete tag '${deletingTag?.name}'? It will be removed from all shortcuts.`"
       confirm-text="Delete"
       :danger="true"
+      :loading="deleting"
       @confirm="handleDelete"
     />
   </div>
@@ -153,6 +154,9 @@ const renamingTag = ref<TagWithCount | null>(null)
 const renameName = ref('')
 const deletingTag = ref<TagWithCount | null>(null)
 const showDeleteConfirm = ref(false)
+const creating = ref(false)
+const renaming = ref(false)
+const deleting = ref(false)
 
 const headers = computed(() => ({
   Authorization: `Bearer ${authStore.token}`,
@@ -177,6 +181,7 @@ const handleCreate = async () => {
   const name = newTagName.value.trim().toLowerCase()
   if (!name) return
 
+  creating.value = true
   try {
     const tag = await $fetch<TagWithCount>('/api/v1/tags', {
       method: 'POST',
@@ -193,6 +198,8 @@ const handleCreate = async () => {
     } else {
       toast.error('Failed to create tag')
     }
+  } finally {
+    creating.value = false
   }
 }
 
@@ -209,6 +216,7 @@ const handleRename = async () => {
     return
   }
 
+  renaming.value = true
   try {
     const updated = await $fetch<TagWithCount>(`/api/v1/tags/${renamingTag.value.id}`, {
       method: 'PUT',
@@ -225,6 +233,8 @@ const handleRename = async () => {
     } else {
       toast.error('Failed to rename tag')
     }
+  } finally {
+    renaming.value = false
   }
 }
 
@@ -235,6 +245,7 @@ const confirmDelete = (tag: TagWithCount) => {
 
 const handleDelete = async () => {
   if (!deletingTag.value) return
+  deleting.value = true
   try {
     await $fetch(`/api/v1/tags/${deletingTag.value.id}`, {
       method: 'DELETE',
@@ -244,8 +255,10 @@ const handleDelete = async () => {
     toast.success('Tag deleted')
   } catch {
     toast.error('Failed to delete tag')
+  } finally {
+    deleting.value = false
+    showDeleteConfirm.value = false
+    deletingTag.value = null
   }
-  showDeleteConfirm.value = false
-  deletingTag.value = null
 }
 </script>

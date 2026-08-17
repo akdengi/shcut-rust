@@ -43,18 +43,20 @@
             <div class="flex items-center justify-end gap-3">
               <button
                 @click="$emit('update:modelValue', false)"
-                class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                :disabled="loading"
+                class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50"
               >
                 Cancel
               </button>
               <button
                 @click="$emit('confirm')"
+                :disabled="loading"
                 :class="[
-                  'px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors',
+                  'px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors disabled:opacity-50',
                   danger ? 'bg-red-600 hover:bg-red-700' : 'bg-indigo-600 hover:bg-indigo-700'
                 ]"
               >
-                {{ confirmText }}
+                {{ loading ? 'Deleting...' : confirmText }}
               </button>
             </div>
           </div>
@@ -71,6 +73,7 @@ defineProps<{
   message: string
   confirmText?: string
   danger?: boolean
+  loading?: boolean
 }>()
 
 defineEmits<{
