@@ -88,9 +88,10 @@
       <!-- Cards view -->
       <div v-else-if="viewMode === 'cards'" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <ShortcutCard
-          v-for="shortcut in shortcutsStore.items"
+          v-for="(shortcut, idx) in shortcutsStore.items"
           :key="shortcut.id"
           :shortcut="shortcut"
+          :index="(shortcutsStore.page - 1) * (shortcutsStore.perPage || shortcutsStore.total) + idx + 1"
           @edit="editShortcut"
           @delete="confirmDelete"
           @stats="openStats"
@@ -104,8 +105,12 @@
           <table class="w-full text-sm">
             <thead>
               <tr class="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
-                <th class="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">ID</th>
-                <th class="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Name</th>
+                <th @click="toggleSort('id')" class="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400 cursor-pointer hover:text-gray-700 dark:hover:text-gray-300 select-none">
+                  ID{{ sortIcon('id') }}
+                </th>
+                <th @click="toggleSort('name')" class="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400 cursor-pointer hover:text-gray-700 dark:hover:text-gray-300 select-none">
+                  Name{{ sortIcon('name') }}
+                </th>
                 <th class="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Short Link</th>
                 <th class="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Target URL</th>
                 <th class="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Tags</th>
@@ -116,7 +121,7 @@
             </thead>
             <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
               <tr
-                v-for="shortcut in shortcutsStore.items"
+                v-for="shortcut in sortedItems"
                 :key="shortcut.id"
                 class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
               >
@@ -295,6 +300,33 @@ const editingShortcut = ref<ShortcutWithTags | null>(null)
 const deletingShortcut = ref<ShortcutWithTags | null>(null)
 const showDeleteConfirm = ref(false)
 const submitting = ref(false)
+const sortField = ref<'id' | 'name'>('id')
+const sortDir = ref<'asc' | 'desc'>('asc')
+
+const sortedItems = computed(() => {
+  const items = [...shortcutsStore.items]
+  items.sort((a, b) => {
+    const valA = a[sortField.value]
+    const valB = b[sortField.value]
+    const cmp = typeof valA === 'string' ? valA.localeCompare(valB as string) : (valA as number) - (valB as number)
+    return sortDir.value === 'asc' ? cmp : -cmp
+  })
+  return items
+})
+
+const toggleSort = (field: 'id' | 'name') => {
+  if (sortField.value === field) {
+    sortDir.value = sortDir.value === 'asc' ? 'desc' : 'asc'
+  } else {
+    sortField.value = field
+    sortDir.value = 'asc'
+  }
+}
+
+const sortIcon = (field: 'id' | 'name') => {
+  if (sortField.value !== field) return ''
+  return sortDir.value === 'asc' ? ' ↑' : ' ↓'
+}
 
 const loadShortcuts = () => {
   const params: any = { per_page: perPage.value || 9999 }
