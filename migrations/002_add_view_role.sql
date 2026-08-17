@@ -1,2 +1,0 @@
--- View role already present in 001_initial.sql
--- This migration is kept as a no-op for compatibility with existing databases
