@@ -217,6 +217,8 @@ async fn main() {
     // Build router
     let app = Router::new()
         .merge(api::routes())
+        // Serve uploaded files (before fallback to avoid SPA catch-all)
+        .nest_service("/uploads", ServeDir::new("/app/data/uploads"))
         // Serve static files (frontend) — falls back to index.html for SPA
         .fallback_service(
             ServeDir::new(&static_dir)

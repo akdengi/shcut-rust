@@ -13,7 +13,6 @@ use sqlx::SqlitePool;
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use tower_http::services::ServeDir;
 
 use crate::config::Config;
 
@@ -85,9 +84,7 @@ pub fn routes() -> Router<AppState> {
         // OG image upload
         .route("/api/v1/upload/og-image", post(shortcuts::upload_og_image))
         // Redirect (public)
-        .route("/s/{name}", get(shortcuts::redirect))
-        // Serve uploaded files
-        .nest_service("/uploads", ServeDir::new("/app/data/uploads"));
+        .route("/s/{name}", get(shortcuts::redirect));
 
     api_routes
 }
