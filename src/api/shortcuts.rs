@@ -255,6 +255,8 @@ pub async fn create(
             id: shortcut_id,
             link: shortcut.link.clone(),
             creator_id: user_id,
+            title: shortcut.title.clone(),
+            description: shortcut.description.clone(),
             og_title: shortcut.og_title.clone(),
             og_description: shortcut.og_description.clone(),
             og_image: shortcut.og_image.clone(),
@@ -377,6 +379,8 @@ pub async fn update(
             id: id,
             link: shortcut.link.clone(),
             creator_id: shortcut.creator_id,
+            title: shortcut.title.clone(),
+            description: shortcut.description.clone(),
             og_title: shortcut.og_title.clone(),
             og_description: shortcut.og_description.clone(),
             og_image: shortcut.og_image.clone(),
@@ -509,6 +513,8 @@ pub async fn redirect(
                         id: s.id,
                         link: s.link.clone(),
                         creator_id: s.creator_id,
+                        title: s.title.clone(),
+                        description: s.description.clone(),
                         og_title: s.og_title.clone(),
                         og_description: s.og_description.clone(),
                         og_image: s.og_image.clone(),
@@ -537,6 +543,13 @@ pub async fn redirect(
         .to_string();
 
     // Build OG HTML page with redirect
+    // OG tags use ONLY og_title/og_description (for social media)
+    // title/description are for API/UI only
+    let title = if !cached.og_title.is_empty() {
+        html_escape(&cached.og_title)
+    } else {
+        html_escape(&name)
+    };
     let og_title = html_escape(&cached.og_title);
     let og_description = html_escape(&cached.og_description);
     let og_image = if cached.og_image.is_empty() {
@@ -548,11 +561,6 @@ pub async fn redirect(
             cached.og_image.clone()
         };
         format!("<meta property=\"og:image\" content=\"{}\" />", html_escape(&img_url))
-    };
-    let title = if cached.og_title.is_empty() {
-        html_escape(&name)
-    } else {
-        og_title.clone()
     };
 
     let html = format!(
