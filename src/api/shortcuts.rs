@@ -396,7 +396,7 @@ pub async fn delete(
 }
 
 pub async fn upload_og_image(
-    State(state): State<AppState>,
+    State(_state): State<AppState>,
     _auth: AuthClaims,
     mut multipart: axum::extract::Multipart,
 ) -> Result<Json<serde_json::Value>, StatusCode> {
