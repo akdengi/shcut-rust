@@ -26,8 +26,6 @@ pub struct CachedShortcut {
     pub id: i64,
     pub link: String,
     pub creator_id: i64,
-    pub title: String,
-    pub description: String,
     pub og_title: String,
     pub og_description: String,
     pub og_image: String,

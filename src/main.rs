@@ -194,8 +194,6 @@ async fn main() {
                 id: s.id,
                 link: s.link.clone(),
                 creator_id: s.creator_id,
-                title: s.title.clone(),
-                description: s.description.clone(),
                 og_title: s.og_title.clone(),
                 og_description: s.og_description.clone(),
                 og_image: s.og_image.clone(),
