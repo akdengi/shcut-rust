@@ -164,6 +164,26 @@
             </div>
           </div>
         </div>
+
+        <div v-if="analytics?.utm_mediums?.length" class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
+          <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-3">UTM Mediums</h3>
+          <div class="space-y-2">
+            <div v-for="item in analytics.utm_mediums" :key="item.name" class="flex items-center justify-between">
+              <span class="text-sm text-gray-600 dark:text-gray-400">{{ item.name }}</span>
+              <span class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ item.count }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div v-if="analytics?.utm_campaigns?.length" class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
+          <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-3">UTM Campaigns</h3>
+          <div class="space-y-2">
+            <div v-for="item in analytics.utm_campaigns" :key="item.name" class="flex items-center justify-between">
+              <span class="text-sm text-gray-600 dark:text-gray-400">{{ item.name }}</span>
+              <span class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ item.count }}</span>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Activity Log -->
