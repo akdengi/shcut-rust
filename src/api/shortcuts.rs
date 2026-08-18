@@ -542,6 +542,25 @@ pub async fn redirect(
         .unwrap_or("localhost:5231")
         .to_string();
 
+    // Detect social media crawlers
+    let ua = headers
+        .get("user-agent")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("")
+        .to_lowercase();
+    let is_crawler = ua.contains("facebookexternalhit")
+        || ua.contains("twitterbot")
+        || ua.contains("telegrambot")
+        || ua.contains("vkbot")
+        || ua.contains("vkshare")
+        || ua.contains("googlebot")
+        || ua.contains("bingbot")
+        || ua.contains("slurp")
+        || ua.contains("discordbot")
+        || ua.contains("whatsapp")
+        || ua.contains("slackbot")
+        || ua.contains("skypeuripreview");
+
     // Build OG HTML page with redirect
     // OG tags use ONLY og_title/og_description (for social media)
     // title/description are for API/UI only
@@ -563,6 +582,18 @@ pub async fn redirect(
         format!("<meta property=\"og:image\" content=\"{}\" />", html_escape(&img_url))
     };
 
+    // Crawlers get page without redirect (to read OG tags)
+    // Browsers get redirect via meta refresh + JS
+    let redirect_html = if is_crawler {
+        String::new()
+    } else {
+        format!(
+            r#"<meta http-equiv="refresh" content="0;url={target}" />
+<script>window.location.replace("{target}")</script>"#,
+            target = html_escape(&target),
+        )
+    };
+
     let html = format!(
         r#"<!DOCTYPE html>
 <html>
@@ -573,8 +604,7 @@ pub async fn redirect(
 <meta property="og:description" content="{og_description}" />
 <meta property="og:url" content="http://{host}/s/{name}" />
 {og_image}
-<meta http-equiv="refresh" content="0;url={target}" />
-<script>window.location.replace("{target}")</script>
+{redirect_html}
 </head>
 <body>
 <p>Redirecting to <a href="{target}">{target}</a>...</p>
@@ -584,6 +614,7 @@ pub async fn redirect(
         og_title = og_title,
         og_description = og_description,
         og_image = og_image,
+        redirect_html = redirect_html,
         host = html_escape(&host),
         name = html_escape(&name),
         target = html_escape(&target),
