@@ -6,7 +6,7 @@
         Short name <span class="text-red-500">*</span>
       </label>
       <div class="flex items-center">
-        <span class="text-sm text-gray-500 dark:text-gray-400 mr-1">/</span>
+        <span class="text-sm text-gray-500 dark:text-gray-400 mr-1">/s/</span>
         <input
           id="shortcut-name"
           v-model="form.name"
@@ -16,6 +16,7 @@
           class="flex-1 block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors"
         />
       </div>
+      <p v-if="form.name" class="mt-1 text-xs text-gray-500 dark:text-gray-400">URL: /s/{{ normalizedName }}</p>
     </div>
 
     <!-- Target URL -->
@@ -203,6 +204,17 @@ const emit = defineEmits<{
 
 const editMode = computed(() => !!props.shortcut)
 const submitting = computed(() => props.loading ?? false)
+
+const normalizeName = (name: string): string => {
+  return name
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '')
+    .replace(/_+/g, '_')
+}
+
+const normalizedName = computed(() => normalizeName(form.value.name))
 
 const form = ref({
   name: '',

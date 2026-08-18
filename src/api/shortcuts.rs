@@ -193,9 +193,15 @@ pub async fn create(
         return Err(StatusCode::FORBIDDEN);
     }
 
+    // Normalize name: lowercase, replace spaces/special chars with underscores
+    let name = normalize_name(&input.name);
+    if name.is_empty() {
+        return Err(StatusCode::BAD_REQUEST);
+    }
+
     // Check if name is unique
     let existing = sqlx::query_scalar::<_, i64>("SELECT id FROM shortcuts WHERE name = ?")
-        .bind(&input.name)
+        .bind(&name)
         .fetch_optional(&state.db)
         .await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
@@ -212,7 +218,7 @@ pub async fn create(
         "INSERT INTO shortcuts (creator_id, name, link, title, description, visibility, og_title, og_description, og_image, created_ts, updated_ts) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
     )
     .bind(user_id)
-    .bind(&input.name)
+    .bind(&name)
     .bind(&input.link)
     .bind(input.title.as_deref().unwrap_or(""))
     .bind(input.description.as_deref().unwrap_or(""))
@@ -293,11 +299,30 @@ pub async fn update(
 
     let now = Utc::now().timestamp();
 
+    // Normalize name if provided
+    let name = input.name.as_deref().map(normalize_name);
+    if let Some(ref n) = name {
+        if n.is_empty() {
+            return Err(StatusCode::BAD_REQUEST);
+        }
+        // Check uniqueness if name is changing
+        if n != &existing.name {
+            let taken = sqlx::query_scalar::<_, i64>("SELECT id FROM shortcuts WHERE name = ?")
+                .bind(n)
+                .fetch_optional(&state.db)
+                .await
+                .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+            if taken.is_some() {
+                return Err(StatusCode::CONFLICT);
+            }
+        }
+    }
+
     // Update shortcut
     sqlx::query(
         "UPDATE shortcuts SET name = ?, link = ?, title = ?, description = ?, visibility = ?, og_title = ?, og_description = ?, og_image = ?, updated_ts = ? WHERE id = ?",
     )
-    .bind(input.name.as_deref().unwrap_or(&existing.name))
+    .bind(name.as_deref().unwrap_or(&existing.name))
     .bind(input.link.as_deref().unwrap_or(&existing.link))
     .bind(input.title.as_deref().unwrap_or(&existing.title))
     .bind(input.description.as_deref().unwrap_or(&existing.description))
@@ -652,6 +677,22 @@ async fn get_geo_from_ip(ip: &str) -> (Option<String>, Option<String>) {
 }
 
 // Helper functions
+
+fn normalize_name(name: &str) -> String {
+    name.trim()
+        .to_lowercase()
+        .chars()
+        .map(|c| {
+            if c.is_alphanumeric() { c }
+            else if c.is_whitespace() { '_' }
+            else { '_' }
+        })
+        .collect::<String>()
+        .split('_')
+        .filter(|s| !s.is_empty())
+        .collect::<Vec<_>>()
+        .join("_")
+}
 
 async fn get_shortcut_tags(db: &sqlx::SqlitePool, shortcut_id: i64) -> Result<Vec<String>, sqlx::Error> {
     let tags = sqlx::query_scalar::<_, String>(
