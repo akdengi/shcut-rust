@@ -202,10 +202,13 @@
                 <th class="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">OS</th>
                 <th class="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Browser</th>
                 <th class="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Referrer</th>
+                <th class="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">UTM Source</th>
+                <th class="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">UTM Medium</th>
+                <th class="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">UTM Campaign</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
-              <tr v-for="activity in activities" :key="activity.id" class="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+              <tr v-for="activity in paginatedActivities" :key="activity.id" class="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                 <td class="px-4 py-3 text-gray-500 dark:text-gray-400 text-xs whitespace-nowrap">{{ formatTime(activity.created_ts) }}</td>
                 <td class="px-4 py-3 text-gray-500 dark:text-gray-400 text-xs font-mono">{{ activity.ip || '—' }}</td>
                 <td class="px-4 py-3 text-gray-500 dark:text-gray-400 text-xs">{{ activity.country || '—' }}</td>
@@ -213,9 +216,20 @@
                 <td class="px-4 py-3 text-gray-500 dark:text-gray-400 text-xs">{{ activity.os || '—' }}</td>
                 <td class="px-4 py-3 text-gray-500 dark:text-gray-400 text-xs">{{ activity.browser || '—' }}</td>
                 <td class="px-4 py-3 text-gray-500 dark:text-gray-400 text-xs truncate max-w-[150px]">{{ activity.referer_domain || 'Direct' }}</td>
+                <td class="px-4 py-3 text-gray-500 dark:text-gray-400 text-xs">{{ activity.utm_source || '—' }}</td>
+                <td class="px-4 py-3 text-gray-500 dark:text-gray-400 text-xs">{{ activity.utm_medium || '—' }}</td>
+                <td class="px-4 py-3 text-gray-500 dark:text-gray-400 text-xs">{{ activity.utm_campaign || '—' }}</td>
               </tr>
             </tbody>
           </table>
+        </div>
+        <!-- Pagination -->
+        <div v-if="totalActivityPages > 1" class="px-5 py-3 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
+          <span class="text-xs text-gray-500 dark:text-gray-400">Page {{ activityPage }} of {{ totalActivityPages }} ({{ activities.length }} total)</span>
+          <div class="flex gap-2">
+            <button @click="activityPage--" :disabled="activityPage <= 1" class="px-3 py-1 text-xs font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">Prev</button>
+            <button @click="activityPage++" :disabled="activityPage >= totalActivityPages" class="px-3 py-1 text-xs font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">Next</button>
+          </div>
         </div>
       </div>
     </template>
@@ -269,6 +283,8 @@ const showResetConfirm = ref(false)
 const submitting = ref(false)
 const analytics = ref<ShortcutAnalytics | null>(null)
 const activities = ref<any[]>([])
+const activityPage = ref(1)
+const activityPageSize = 10
 const copied = ref(false)
 const dateFrom = ref('')
 const dateTo = ref('')
@@ -297,6 +313,12 @@ const yLabels = computed(() => {
 
 const formatTime = (ts: number) => new Date(ts * 1000).toLocaleString()
 
+const totalActivityPages = computed(() => Math.ceil(activities.value.length / activityPageSize))
+const paginatedActivities = computed(() => {
+  const start = (activityPage.value - 1) * activityPageSize
+  return activities.value.slice(start, start + activityPageSize)
+})
+
 const loadAnalytics = async () => {
   const id = Number(route.params.id)
   let url = `/api/v1/shortcuts/${id}/analytics`
@@ -316,6 +338,7 @@ const loadAnalytics = async () => {
   })
   analytics.value = data
   activities.value = data.activities || []
+  activityPage.value = 1
 }
 
 const clearDates = () => {
