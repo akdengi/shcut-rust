@@ -20,8 +20,21 @@ use crate::config::Config;
 /// IP dedup cache: maps "shortcut_id:ip" -> last_view_timestamp
 pub type DedupCache = Arc<RwLock<HashMap<String, i64>>>;
 
-/// URL cache: maps shortcut name -> (id, target_url, creator_id)
-pub type UrlCache = Arc<RwLock<HashMap<String, (i64, String, i64)>>>;
+/// Cached shortcut data for fast redirects
+#[derive(Clone)]
+pub struct CachedShortcut {
+    pub id: i64,
+    pub link: String,
+    pub creator_id: i64,
+    pub title: String,
+    pub description: String,
+    pub og_title: String,
+    pub og_description: String,
+    pub og_image: String,
+}
+
+/// URL cache: maps shortcut name -> CachedShortcut
+pub type UrlCache = Arc<RwLock<HashMap<String, CachedShortcut>>>;
 
 #[derive(Clone)]
 pub struct AppState {

@@ -184,13 +184,22 @@ async fn main() {
 
     // Pre-warm URL cache
     {
-        let shortcuts = sqlx::query_as::<_, crate::db::models::Shortcut>("SELECT id, name, link, creator_id FROM shortcuts")
+        let shortcuts = sqlx::query_as::<_, crate::db::models::Shortcut>("SELECT * FROM shortcuts")
             .fetch_all(&pool)
             .await
             .unwrap_or_default();
         let mut cache = state.url_cache.write().await;
         for s in &shortcuts {
-            cache.insert(s.name.clone(), (s.id, s.link.clone(), s.creator_id));
+            cache.insert(s.name.clone(), api::CachedShortcut {
+                id: s.id,
+                link: s.link.clone(),
+                creator_id: s.creator_id,
+                title: s.title.clone(),
+                description: s.description.clone(),
+                og_title: s.og_title.clone(),
+                og_description: s.og_description.clone(),
+                og_image: s.og_image.clone(),
+            });
         }
         tracing::info!("URL cache warmed with {} shortcuts", cache.len());
     }

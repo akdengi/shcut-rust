@@ -251,7 +251,16 @@ pub async fn create(
     // Add to URL cache
     {
         let mut cache = state.url_cache.write().await;
-        cache.insert(shortcut.name.clone(), (shortcut_id, shortcut.link.clone(), user_id));
+        cache.insert(shortcut.name.clone(), super::CachedShortcut {
+            id: shortcut_id,
+            link: shortcut.link.clone(),
+            creator_id: user_id,
+            title: shortcut.title.clone(),
+            description: shortcut.description.clone(),
+            og_title: shortcut.og_title.clone(),
+            og_description: shortcut.og_description.clone(),
+            og_image: shortcut.og_image.clone(),
+        });
     }
 
     let tags = get_shortcut_tags(&state.db, shortcut_id)
@@ -366,7 +375,16 @@ pub async fn update(
         if existing.name != shortcut.name {
             cache.remove(&existing.name);
         }
-        cache.insert(shortcut.name.clone(), (id, shortcut.link.clone(), shortcut.creator_id));
+        cache.insert(shortcut.name.clone(), super::CachedShortcut {
+            id: id,
+            link: shortcut.link.clone(),
+            creator_id: shortcut.creator_id,
+            title: shortcut.title.clone(),
+            description: shortcut.description.clone(),
+            og_title: shortcut.og_title.clone(),
+            og_description: shortcut.og_description.clone(),
+            og_image: shortcut.og_image.clone(),
+        });
     }
 
     let tags = get_shortcut_tags(&state.db, id)
@@ -414,7 +432,7 @@ pub async fn delete(
     // Invalidate URL cache
     {
         let mut cache = state.url_cache.write().await;
-        cache.retain(|_, (cached_id, _, _)| *cached_id != id);
+        cache.retain(|_, cached| cached.id != id);
     }
 
     Ok(StatusCode::NO_CONTENT)
@@ -472,39 +490,104 @@ pub async fn redirect(
     axum::extract::OriginalUri(uri): axum::extract::OriginalUri,
     headers: HeaderMap,
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
-) -> Result<axum::response::Redirect, StatusCode> {
+) -> Result<axum::response::Html<String>, StatusCode> {
     // Try URL cache first for instant redirect
     let cached = {
         let cache = state.url_cache.read().await;
         cache.get(&name).cloned()
     };
 
-    let (shortcut_id, target, creator_id) = if let Some((id, url, cid)) = cached {
-        (id, url, cid)
-    } else {
-        // Cache miss: query DB and cache the result
-        let shortcut = sqlx::query_as::<_, Shortcut>("SELECT * FROM shortcuts WHERE name = ?")
-            .bind(&name)
-            .fetch_optional(&state.db)
-            .await
-            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    let cached = match cached {
+        Some(c) => c,
+        None => {
+            // Cache miss: query DB and cache the result
+            let shortcut = sqlx::query_as::<_, Shortcut>("SELECT * FROM shortcuts WHERE name = ?")
+                .bind(&name)
+                .fetch_optional(&state.db)
+                .await
+                .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
-        match shortcut {
-            Some(s) => {
-                let target = s.link.clone();
-                // Cache for next time
-                {
-                    let mut cache = state.url_cache.write().await;
-                    cache.insert(name.clone(), (s.id, target.clone(), s.creator_id));
+            match shortcut {
+                Some(s) => {
+                    let cached = super::CachedShortcut {
+                        id: s.id,
+                        link: s.link.clone(),
+                        creator_id: s.creator_id,
+                        title: s.title.clone(),
+                        description: s.description.clone(),
+                        og_title: s.og_title.clone(),
+                        og_description: s.og_description.clone(),
+                        og_image: s.og_image.clone(),
+                    };
+                    // Cache for next time
+                    {
+                        let mut cache = state.url_cache.write().await;
+                        cache.insert(name.clone(), cached.clone());
+                    }
+                    cached
                 }
-                (s.id, target, s.creator_id)
+                None => return Err(StatusCode::NOT_FOUND),
             }
-            None => return Err(StatusCode::NOT_FOUND),
         }
     };
 
-    // Redirect IMMEDIATELY — no DB, no dedup, just the cached URL
-    let redirect_resp = Ok(axum::response::Redirect::temporary(&target));
+    let target = cached.link.clone();
+    let shortcut_id = cached.id;
+    let creator_id = cached.creator_id;
+
+    // Get host from request headers for OG URLs
+    let host = headers
+        .get("host")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("localhost:5231")
+        .to_string();
+
+    // Build OG HTML page with redirect
+    let og_title = html_escape(&cached.og_title);
+    let og_description = html_escape(&cached.og_description);
+    let og_image = if cached.og_image.is_empty() {
+        String::new()
+    } else {
+        let img_url = if cached.og_image.starts_with('/') {
+            format!("http://{}{}", host, cached.og_image)
+        } else {
+            cached.og_image.clone()
+        };
+        format!("<meta property=\"og:image\" content=\"{}\" />", html_escape(&img_url))
+    };
+    let title = if cached.og_title.is_empty() {
+        html_escape(&name)
+    } else {
+        og_title.clone()
+    };
+
+    let html = format!(
+        r#"<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>{title}</title>
+<meta property="og:title" content="{og_title}" />
+<meta property="og:description" content="{og_description}" />
+<meta property="og:url" content="http://{host}/s/{name}" />
+{og_image}
+<meta http-equiv="refresh" content="0;url={target}" />
+<script>window.location.replace("{target}")</script>
+</head>
+<body>
+<p>Redirecting to <a href="{target}">{target}</a>...</p>
+</body>
+</html>"#,
+        title = title,
+        og_title = og_title,
+        og_description = og_description,
+        og_image = og_image,
+        host = html_escape(&host),
+        name = html_escape(&name),
+        target = html_escape(&target),
+    );
+
+    let redirect_resp = Ok(axum::response::Html(html));
 
     // ALL analytics work in background
     let user_agent = headers
@@ -652,6 +735,14 @@ fn extract_utm_param(query: &str, param: &str) -> Option<String> {
         }
     }
     None
+}
+
+fn html_escape(s: &str) -> String {
+    s.replace('&', "&amp;")
+        .replace('<', "&lt;")
+        .replace('>', "&gt;")
+        .replace('"', "&quot;")
+        .replace('\'', "&#x27;")
 }
 
 async fn get_geo_from_ip(ip: &str) -> (Option<String>, Option<String>) {
