@@ -177,9 +177,10 @@
 
     <!-- Delete Confirmation -->
     <ConfirmDialog
-      v-if="deletingUser"
+      v-model="showDeleteConfirm"
       title="Delete User"
-      :message="`Are you sure you want to delete user '${deletingUser.nickname}' (${deletingUser.email})?`"
+      :message="`Are you sure you want to delete user '${deletingUser?.nickname}' (${deletingUser?.email})?`"
+      danger
       @confirm="handleDelete"
       @cancel="deletingUser = null"
     />
@@ -286,6 +287,10 @@ const editingUser = ref<User | null>(null)
 const editForm = ref({ nickname: '', email: '', role: 'view' as string })
 const editSaving = ref(false)
 const deletingUser = ref<User | null>(null)
+const showDeleteConfirm = computed({
+  get: () => deletingUser.value !== null,
+  set: (val: boolean) => { if (!val) deletingUser.value = null },
+})
 const showCreateForm = ref(false)
 const createForm = ref({ nickname: '', email: '', password: '', role: 'view' as string })
 const createSaving = ref(false)
@@ -330,6 +335,7 @@ const handleEditSave = async () => {
 
 const confirmDelete = (user: User) => {
   deletingUser.value = user
+  showDeleteConfirm.value = true
 }
 
 const handleCreate = async () => {
@@ -365,6 +371,7 @@ const handleDelete = async () => {
   } catch (e: any) {
     toast.error(e?.data?.message || 'Failed to delete user')
   }
+  showDeleteConfirm.value = false
   deletingUser.value = null
 }
 </script>
