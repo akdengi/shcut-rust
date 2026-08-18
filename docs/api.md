@@ -75,6 +75,18 @@ New users default to `view` role.
 
 ---
 
+## File Upload
+
+| Method | Endpoint | Auth | Role | Description |
+|--------|----------|------|------|-------------|
+| POST | `/api/v1/upload/og-image` | Yes | admin, user | Upload OG image (multipart, max 2MB) |
+
+**Supported formats:** PNG, JPG, GIF, WebP
+
+**Response:** `{ "url": "/uploads/og_<timestamp>.<ext>" }`
+
+---
+
 ## Users
 
 | Method | Endpoint | Auth | Role | Description |

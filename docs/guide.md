@@ -23,7 +23,10 @@ If enabled by admin, new users can register at `/auth/register`. New accounts ge
    - **Title** / **Description** — optional
    - **Tags** — click to select from existing tags
    - **Visibility** — `workspace` (private) or `public`
-3. Click **"Create"**
+3. Expand **"Open Graph"** section for social preview:
+   - **OG Title** / **OG Description** — custom social preview text
+   - **OG Image** — enter an image URL or upload a file (PNG, JPG, GIF, WebP, max 2MB)
+4. Click **"Create"**
 
 Your shortcut is available at `http://your-server:5231/s/<name>`
 
@@ -66,7 +69,7 @@ http://your-server:5231/s/my-product?utm_source=twitter&utm_medium=cpc&utm_campa
 
 ### Where to see UTM data
 
-Go to shortcut → Stats → UTM Sources section shows aggregated data.
+Go to shortcut → Stats → UTM Sources, UTM Mediums, and UTM Campaigns sections show aggregated data for each parameter.
 
 ---
 
@@ -114,9 +117,9 @@ Countries require geolocation to be enabled in Settings → Analytics Settings. 
 - Click the chart icon → opens analytics page with:
   - Date range filter (from/to)
   - Total views, devices, browsers, OS, countries
-  - Referrers and UTM parameters
+  - Referrers and UTM parameters (sources, mediums, campaigns)
   - Views by date chart
-  - Activity log with IP, device, browser, referrer
+  - Activity log with IP, device, browser, referrer, UTM data (paginated, 10 per page)
 
 ---
 
