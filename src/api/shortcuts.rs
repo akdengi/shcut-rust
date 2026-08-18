@@ -395,6 +395,52 @@ pub async fn delete(
     Ok(StatusCode::NO_CONTENT)
 }
 
+pub async fn upload_og_image(
+    State(state): State<AppState>,
+    _auth: AuthClaims,
+    mut multipart: axum::extract::Multipart,
+) -> Result<Json<serde_json::Value>, StatusCode> {
+    let upload_dir = std::path::PathBuf::from("/app/data/uploads");
+    tokio::fs::create_dir_all(&upload_dir)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    while let Some(field) = multipart.next_field().await.map_err(|_| StatusCode::BAD_REQUEST)? {
+        let name = field.name().unwrap_or("").to_string();
+        if name != "file" {
+            continue;
+        }
+
+        let file_name = field.file_name().unwrap_or("og_image").to_string();
+        let ext = file_name.rsplit('.').next().unwrap_or("png");
+
+        // Validate extension
+        let allowed = ["png", "jpg", "jpeg", "gif", "webp"];
+        if !allowed.contains(&ext.to_lowercase().as_str()) {
+            return Err(StatusCode::BAD_REQUEST);
+        }
+
+        let data = field.bytes().await.map_err(|_| StatusCode::BAD_REQUEST)?;
+
+        // Limit file size to 2MB
+        if data.len() > 2 * 1024 * 1024 {
+            return Err(StatusCode::PAYLOAD_TOO_LARGE);
+        }
+
+        let saved_name = format!("og_{}.{}", chrono::Utc::now().timestamp_millis(), ext);
+        let file_path = upload_dir.join(&saved_name);
+
+        tokio::fs::write(&file_path, &data)
+            .await
+            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+        let url = format!("/uploads/{}", saved_name);
+        return Ok(serde_json::json!({ "url": url }).into());
+    }
+
+    Err(StatusCode::BAD_REQUEST)
+}
+
 pub async fn redirect(
     State(state): State<AppState>,
     Path(name): Path<String>,

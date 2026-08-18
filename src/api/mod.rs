@@ -69,6 +69,8 @@ pub fn routes() -> Router<AppState> {
         .route("/api/v1/settings", get(settings::get_settings).put(settings::update_settings))
         // Logo upload
         .route("/api/v1/settings/logo", post(settings::upload_logo))
+        // OG image upload
+        .route("/api/v1/upload/og-image", post(shortcuts::upload_og_image))
         // Redirect (public)
         .route("/s/{name}", get(shortcuts::redirect))
         // Serve uploaded files

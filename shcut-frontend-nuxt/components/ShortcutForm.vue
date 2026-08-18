@@ -146,9 +146,23 @@
             class="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors resize-none" />
         </div>
         <div>
-          <label for="og-image" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">OG Image URL</label>
-          <input id="og-image" v-model="form.og_image" type="url" placeholder="https://example.com/image.png"
-            class="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors" />
+          <label for="og-image" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">OG Image</label>
+          <div class="flex gap-2 mb-2">
+            <button type="button" @click="ogImageMode = 'url'" :class="['px-3 py-1.5 text-xs font-medium rounded-lg transition-colors', ogImageMode === 'url' ? 'bg-indigo-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600']">URL</button>
+            <button type="button" @click="ogImageMode = 'upload'" :class="['px-3 py-1.5 text-xs font-medium rounded-lg transition-colors', ogImageMode === 'upload' ? 'bg-indigo-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600']">Upload File</button>
+          </div>
+          <div v-if="ogImageMode === 'url'">
+            <input id="og-image" v-model="form.og_image" type="url" placeholder="https://example.com/image.png"
+              class="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors" />
+          </div>
+          <div v-else>
+            <div v-if="form.og_image && form.og_image.startsWith('/uploads/')" class="mb-2">
+              <img :src="form.og_image" alt="OG Image preview" class="h-20 rounded-lg object-cover border border-gray-200 dark:border-gray-700" />
+            </div>
+            <input type="file" accept="image/png,image/jpeg,image/gif,image/webp" @change="handleOgImageUpload" class="block w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-indigo-50 dark:file:bg-indigo-900/30 file:text-indigo-700 dark:file:text-indigo-300 hover:file:bg-indigo-100 dark:hover:file:bg-indigo-900/50" />
+            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">PNG, JPG, GIF or WebP. Max 2 MB.</p>
+            <p v-if="ogImageUploading" class="mt-1 text-xs text-indigo-600 dark:text-indigo-400">Uploading...</p>
+          </div>
         </div>
       </div>
     </details>
@@ -200,6 +214,38 @@ const form = ref({
   og_description: '',
   og_image: '',
 })
+
+const ogImageMode = ref<'url' | 'upload'>('url')
+const ogImageUploading = ref(false)
+
+const handleOgImageUpload = async (event: Event) => {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  if (!file) return
+
+  if (file.size > 2 * 1024 * 1024) {
+    alert('File size must be less than 2 MB')
+    input.value = ''
+    return
+  }
+
+  ogImageUploading.value = true
+  try {
+    const formData = new FormData()
+    formData.append('file', file)
+    const data = await $fetch<{ url: string }>('/api/v1/upload/og-image', {
+      method: 'POST',
+      body: formData,
+      headers: { Authorization: `Bearer ${useAuthStore().token}` },
+    })
+    form.value.og_image = data.url
+  } catch (e) {
+    alert('Failed to upload image')
+  } finally {
+    ogImageUploading.value = false
+    input.value = ''
+  }
+}
 
 const selectedTags = ref<string[]>([])
 const existingTags = ref<string[]>([])
