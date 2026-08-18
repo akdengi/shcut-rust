@@ -153,7 +153,7 @@
             <button type="button" @click="ogImageMode = 'upload'" :class="['px-3 py-1.5 text-xs font-medium rounded-lg transition-colors', ogImageMode === 'upload' ? 'bg-indigo-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600']">Upload File</button>
           </div>
           <div v-if="ogImageMode === 'url'">
-            <input id="og-image" v-model="form.og_image" type="url" placeholder="https://example.com/image.png"
+            <input id="og-image" v-model="form.og_image" type="text" placeholder="https://example.com/image.png"
               class="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors" />
           </div>
           <div v-else>
@@ -296,6 +296,8 @@ watch(
         og_description: s.og_description || '',
         og_image: s.og_image || '',
       }
+      // Auto-detect OG image mode based on existing value
+      ogImageMode.value = s.og_image?.startsWith('/uploads/') ? 'upload' : 'url'
       selectedTags.value = [...(s.tags || [])]
     } else {
       form.value = {
