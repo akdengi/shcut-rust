@@ -181,6 +181,7 @@
       title="Delete User"
       :message="`Are you sure you want to delete user '${deletingUser?.nickname}' (${deletingUser?.email})?`"
       danger
+      :loading="deleteLoading"
       @confirm="handleDelete"
       @cancel="deletingUser = null"
     />
@@ -320,6 +321,7 @@ const editingUser = ref<User | null>(null)
 const editForm = ref({ nickname: '', email: '', role: 'view' as string })
 const editSaving = ref(false)
 const deletingUser = ref<User | null>(null)
+const deleteLoading = ref(false)
 const showDeleteConfirm = computed({
   get: () => deletingUser.value !== null,
   set: (val: boolean) => { if (!val) deletingUser.value = null },
@@ -403,6 +405,7 @@ const handleCreate = async () => {
 
 const handleDelete = async () => {
   if (!deletingUser.value) return
+  deleteLoading.value = true
   try {
     await api.del(`/api/v1/users/${deletingUser.value.id}`)
     users.value = users.value.filter(u => u.id !== deletingUser.value!.id)
@@ -410,6 +413,7 @@ const handleDelete = async () => {
   } catch (e: any) {
     toast.error(e?.data?.message || 'Failed to delete user')
   }
+  deleteLoading.value = false
   showDeleteConfirm.value = false
   deletingUser.value = null
 }
