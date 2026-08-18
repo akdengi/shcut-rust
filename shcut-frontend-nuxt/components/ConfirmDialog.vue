@@ -56,7 +56,7 @@
                   danger ? 'bg-red-600 hover:bg-red-700' : 'bg-indigo-600 hover:bg-indigo-700'
                 ]"
               >
-                {{ loading ? 'Deleting...' : confirmText }}
+                {{ loading ? 'Deleting...' : props.confirmText }}
               </button>
             </div>
           </div>
@@ -67,14 +67,16 @@
 </template>
 
 <script setup lang="ts">
-defineProps<{
+const props = withDefaults(defineProps<{
   modelValue: boolean
   title: string
   message: string
   confirmText?: string
   danger?: boolean
   loading?: boolean
-}>()
+}>(), {
+  confirmText: 'Delete',
+})
 
 defineEmits<{
   'update:modelValue': [value: boolean]
