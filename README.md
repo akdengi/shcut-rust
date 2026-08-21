@@ -10,6 +10,7 @@ Self-hosted URL shortener built with Rust and Nuxt 3.
 - **Workspace settings** — company name, logo upload
 - **Roles** — admin, user (create/edit), view (read-only)
 - **JWT auth** — secure authentication with admin seeding from .env
+- **Password management** — self-service change, admin reset, forgot password via email
 - **Dark mode** — automatic theme switching
 - **Instant redirects** — URL cache for zero-latency redirects
 

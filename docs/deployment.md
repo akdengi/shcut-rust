@@ -50,6 +50,12 @@ See `.env.example` for all available options. Key variables:
 | `ADMIN_EMAIL` | No | Auto-create admin on first start |
 | `ADMIN_PASSWORD` | No | Admin password (required if ADMIN_EMAIL set) |
 | `ALLOW_REGISTRATION` | No | Allow public user registration (default: false) |
+| `APP_URL` | No | Public URL for password reset links |
+| `SMTP_HOST` | No | SMTP server host (required for password reset emails) |
+| `SMTP_PORT` | No | SMTP port (default: 587) |
+| `SMTP_USER` | No | SMTP username |
+| `SMTP_PASSWORD` | No | SMTP password |
+| `SMTP_FROM` | No | Sender email address |
 
 ## Performance Features
 

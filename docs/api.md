@@ -24,6 +24,9 @@ New users default to `view` role.
 | POST | `/api/v1/auth/login` | No | Login, returns JWT |
 | GET | `/api/v1/auth/me` | Yes | Current user info |
 | GET | `/api/v1/auth/register-allowed` | No | Check if registration open |
+| PUT | `/api/v1/auth/change-password` | Yes | Change own password (current + new) |
+| POST | `/api/v1/auth/forgot-password` | No | Send password reset email |
+| POST | `/api/v1/auth/reset-password` | No | Reset password with token |
 
 ---
 
@@ -95,6 +98,7 @@ New users default to `view` role.
 | POST | `/api/v1/users` | Yes | admin | Create user |
 | PUT | `/api/v1/users/:id` | Yes | admin (any), user (self) | Update user |
 | DELETE | `/api/v1/users/:id` | Yes | admin | Delete user |
+| PUT | `/api/v1/users/:id/password` | Yes | admin | Reset user password (not admin) |
 
 **Update fields:** `nickname`, `email`, `role` (admin only, cannot assign admin)
 
@@ -119,3 +123,4 @@ New users default to `view` role.
 | 409 | Conflict (duplicate) |
 | 413 | Payload too large |
 | 500 | Internal error |
+| 501 | Not implemented (SMTP not configured) |

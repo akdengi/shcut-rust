@@ -151,8 +151,42 @@ Go to **Settings → User Management**:
 | **view** | Read-only — view shortcuts and stats |
 
 - Edit user: click "Edit" → change nickname, email, role
+- Reset password: click "Edit" → enter "New Password" (admin can reset for user/view roles)
 - Delete user: click "Delete" → confirm
 - New users default to **view** role
+
+---
+
+## Password Management
+
+### Change Your Password
+
+1. Go to **Settings → Profile**
+2. Scroll to **Change Password** section
+3. Enter your current password
+4. Enter and confirm your new password (min 6 characters)
+5. Click **"Change Password"**
+
+### Forgot Password (requires SMTP)
+
+If SMTP is configured by the admin, users can reset their password:
+
+1. Go to the login page
+2. Click **"Forgot password?"**
+3. Enter your email address
+4. Check your inbox for a reset link (valid for 1 hour)
+5. Click the link and set a new password
+
+### Admin Reset Password
+
+Admin can set a new password for any non-admin user:
+
+1. Go to **Settings → User Management**
+2. Click **"Edit"** next to the user
+3. Enter a new password in the **"New Password"** field
+4. Click **"Save"**
+
+The user can then log in with the new password.
 
 ---
 
