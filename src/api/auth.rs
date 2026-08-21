@@ -305,6 +305,7 @@ pub async fn reset_password(
 }
 
 #[derive(Debug, sqlx::FromRow)]
+#[allow(dead_code)]
 struct PasswordReset {
     id: i64,
     user_id: i64,
