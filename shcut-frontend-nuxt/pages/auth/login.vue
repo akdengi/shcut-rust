@@ -61,7 +61,7 @@
           </button>
         </form>
 
-        <div class="mt-4 text-center text-sm text-gray-600 dark:text-gray-400">
+        <div v-if="registrationAllowed" class="mt-4 text-center text-sm text-gray-600 dark:text-gray-400">
           <NuxtLink to="/auth/forgot-password" class="text-blue-600 hover:text-blue-500 font-medium">Forgot password?</NuxtLink>
         </div>
 

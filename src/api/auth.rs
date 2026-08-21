@@ -229,6 +229,10 @@ pub async fn forgot_password(
     State(state): State<AppState>,
     Json(input): Json<ForgotPasswordRequest>,
 ) -> Result<Json<Value>, StatusCode> {
+    if !state.allow_registration {
+        return Err(StatusCode::FORBIDDEN);
+    }
+
     if !state.config.smtp_configured() {
         return Err(StatusCode::NOT_IMPLEMENTED);
     }
