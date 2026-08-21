@@ -562,20 +562,24 @@ pub async fn redirect(
         || ua.contains("skypeuripreview");
 
     // Build OG HTML page with redirect
-    // OG tags use ONLY og_title/og_description (for social media)
-    // title/description are for API/UI only
-    let title = if !cached.og_title.is_empty() {
+    // Fallback: og_title -> title -> name, og_description -> description
+    let og_title = if !cached.og_title.is_empty() {
         html_escape(&cached.og_title)
+    } else if !cached.title.is_empty() {
+        html_escape(&cached.title)
     } else {
         html_escape(&name)
     };
-    let og_title = html_escape(&cached.og_title);
-    let og_description = html_escape(&cached.og_description);
+    let og_description = if !cached.og_description.is_empty() {
+        html_escape(&cached.og_description)
+    } else {
+        html_escape(&cached.description)
+    };
     let og_image = if cached.og_image.is_empty() {
         String::new()
     } else {
         let img_url = if cached.og_image.starts_with('/') {
-            format!("http://{}{}", host, cached.og_image)
+            format!("https://{}{}", host, cached.og_image)
         } else {
             cached.og_image.clone()
         };
@@ -599,18 +603,21 @@ pub async fn redirect(
 <html>
 <head>
 <meta charset="utf-8">
-<title>{title}</title>
+<title>{og_title}</title>
+<meta property="og:type" content="website" />
 <meta property="og:title" content="{og_title}" />
 <meta property="og:description" content="{og_description}" />
-<meta property="og:url" content="http://{host}/s/{name}" />
+<meta property="og:url" content="https://{host}/s/{name}" />
 {og_image}
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="{og_title}" />
+<meta name="twitter:description" content="{og_description}" />
 {redirect_html}
 </head>
 <body>
 <p>Redirecting to <a href="{target}">{target}</a>...</p>
 </body>
 </html>"#,
-        title = title,
         og_title = og_title,
         og_description = og_description,
         og_image = og_image,
