@@ -142,6 +142,16 @@
                   />
                 </div>
                 <div v-if="editingUser && editingUser.role !== 'admin' && editingUser.id !== currentUserId">
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">New Password</label>
+                  <input
+                    v-model="editForm.newPassword"
+                    type="password"
+                    minlength="6"
+                    class="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors"
+                    placeholder="Leave empty to keep current"
+                  />
+                </div>
+                <div v-if="editingUser && editingUser.role !== 'admin' && editingUser.id !== currentUserId">
                   <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Role</label>
                   <select
                     v-model="editForm.role"
@@ -318,7 +328,7 @@ const loading = ref(true)
 const users = ref<User[]>([])
 const showEditForm = ref(false)
 const editingUser = ref<User | null>(null)
-const editForm = ref({ nickname: '', email: '', role: 'view' as string })
+const editForm = ref({ nickname: '', email: '', role: 'view' as string, newPassword: '' })
 const editSaving = ref(false)
 const deletingUser = ref<User | null>(null)
 const deleteLoading = ref(false)
@@ -346,7 +356,7 @@ onMounted(async () => {
 
 const openEdit = (user: User) => {
   editingUser.value = user
-  editForm.value = { nickname: user.nickname, email: user.email, role: user.role }
+  editForm.value = { nickname: user.nickname, email: user.email, role: user.role, newPassword: '' }
   showEditForm.value = true
 }
 
@@ -354,6 +364,7 @@ const handleEditSave = async () => {
   if (!editingUser.value) return
   editSaving.value = true
   try {
+    // Update profile
     const updated = await api.put<User>(`/api/v1/users/${editingUser.value.id}`, {
       nickname: editForm.value.nickname,
       email: editForm.value.email,
@@ -361,6 +372,15 @@ const handleEditSave = async () => {
     })
     const idx = users.value.findIndex((u) => u.id === updated.id)
     if (idx !== -1) users.value[idx] = updated
+
+    // Reset password if provided
+    if (editForm.value.newPassword && editingUser.value.role !== 'admin') {
+      await api.put(`/api/v1/users/${editingUser.value.id}/password`, {
+        new_password: editForm.value.newPassword,
+      })
+      toast.success('Password reset')
+    }
+
     showEditForm.value = false
     toast.success('User updated')
   } catch (e: any) {

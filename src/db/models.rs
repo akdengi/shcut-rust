@@ -34,6 +34,18 @@ pub struct UpdateUser {
     pub nickname: Option<String>,
     pub email: Option<String>,
     pub role: Option<String>,
+    pub password: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ChangePassword {
+    pub current_password: String,
+    pub new_password: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct AdminResetPassword {
+    pub new_password: String,
 }
 
 #[derive(Debug, Deserialize)]

@@ -13,7 +13,7 @@ use argon2::{
 };
 
 use super::{AppState, auth_extractor::AuthClaims};
-use crate::db::models::{User, UpdateUser, AdminCreateUser};
+use crate::db::models::{User, UpdateUser, AdminCreateUser, AdminResetPassword};
 
 pub async fn list(
     State(state): State<AppState>,
@@ -232,4 +232,66 @@ pub async fn delete(
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
     Ok(StatusCode::NO_CONTENT)
+}
+
+pub async fn reset_password(
+    State(state): State<AppState>,
+    Path(id): Path<i64>,
+    auth: AuthClaims,
+    Json(input): Json<AdminResetPassword>,
+) -> Result<Json<User>, StatusCode> {
+    let current_user_id: i64 = auth.0.sub.parse().map_err(|_| StatusCode::UNAUTHORIZED)?;
+
+    let role = sqlx::query_scalar::<_, String>("SELECT role FROM users WHERE id = ?")
+        .bind(current_user_id)
+        .fetch_one(&state.db)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    if role != "admin" {
+        return Err(StatusCode::FORBIDDEN);
+    }
+
+    let existing = sqlx::query_as::<_, User>("SELECT * FROM users WHERE id = ?")
+        .bind(id)
+        .fetch_optional(&state.db)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    let existing = match existing {
+        Some(u) => u,
+        None => return Err(StatusCode::NOT_FOUND),
+    };
+
+    if existing.role == "admin" {
+        return Err(StatusCode::FORBIDDEN);
+    }
+
+    if input.new_password.len() < 6 {
+        return Err(StatusCode::BAD_REQUEST);
+    }
+
+    let salt = SaltString::generate(&mut OsRng);
+    let argon2 = argon2::Argon2::default();
+    let password_hash = argon2
+        .hash_password(input.new_password.as_bytes(), &salt)
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
+        .to_string();
+
+    let now = Utc::now().timestamp();
+    sqlx::query("UPDATE users SET password_hash = ?, updated_ts = ? WHERE id = ?")
+        .bind(&password_hash)
+        .bind(now)
+        .bind(id)
+        .execute(&state.db)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    let user = sqlx::query_as::<_, User>("SELECT * FROM users WHERE id = ?")
+        .bind(id)
+        .fetch_one(&state.db)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    Ok(Json(user))
 }

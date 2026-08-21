@@ -7,6 +7,12 @@ pub struct Config {
     pub admin_password: Option<String>,
     pub admin_nickname: Option<String>,
     pub allow_registration: bool,
+    pub smtp_host: Option<String>,
+    pub smtp_port: u16,
+    pub smtp_user: Option<String>,
+    pub smtp_password: Option<String>,
+    pub smtp_from: Option<String>,
+    pub app_url: Option<String>,
 }
 
 impl Config {
@@ -34,6 +40,19 @@ impl Config {
                 .unwrap_or_else(|_| "true".to_string())
                 .to_lowercase()
                 != "false",
+            smtp_host: std::env::var("SMTP_HOST").ok().filter(|s| !s.is_empty()),
+            smtp_port: std::env::var("SMTP_PORT")
+                .unwrap_or_else(|_| "587".to_string())
+                .parse()
+                .unwrap_or(587),
+            smtp_user: std::env::var("SMTP_USER").ok().filter(|s| !s.is_empty()),
+            smtp_password: std::env::var("SMTP_PASSWORD").ok().filter(|s| !s.is_empty()),
+            smtp_from: std::env::var("SMTP_FROM").ok().filter(|s| !s.is_empty()),
+            app_url: std::env::var("APP_URL").ok().filter(|s| !s.is_empty()),
         }
+    }
+
+    pub fn smtp_configured(&self) -> bool {
+        self.smtp_host.is_some() && self.smtp_user.is_some() && self.smtp_password.is_some()
     }
 }

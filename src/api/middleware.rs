@@ -91,6 +91,8 @@ fn is_public_route(path: &str, method: &Method) -> bool {
     if path == "/api/v1/auth/login"
         || path == "/api/v1/auth/register"
         || path == "/api/v1/auth/register-allowed"
+        || path == "/api/v1/auth/forgot-password"
+        || path == "/api/v1/auth/reset-password"
     {
         return true;
     }

@@ -14,6 +14,15 @@ export interface AuthResponse {
   user: User
 }
 
+export interface ChangePasswordPayload {
+  current_password: string
+  new_password: string
+}
+
+export interface AdminResetPasswordPayload {
+  new_password: string
+}
+
 // ─── Shortcuts ───────────────────────────────────────────
 
 export interface Shortcut {

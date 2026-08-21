@@ -64,6 +64,9 @@ pub fn routes() -> Router<AppState> {
         .route("/api/v1/auth/register", post(auth::register))
         .route("/api/v1/auth/login", post(auth::login))
         .route("/api/v1/auth/me", get(auth::me))
+        .route("/api/v1/auth/change-password", put(auth::change_password))
+        .route("/api/v1/auth/forgot-password", post(auth::forgot_password))
+        .route("/api/v1/auth/reset-password", post(auth::reset_password))
         .route("/api/v1/auth/register-allowed", get(auth::register_allowed))
         // Shortcuts
         .route("/api/v1/shortcuts", get(shortcuts::list).post(shortcuts::create))
@@ -77,6 +80,7 @@ pub fn routes() -> Router<AppState> {
         // Users (admin only)
         .route("/api/v1/users", get(users::list).post(users::create))
         .route("/api/v1/users/{id}", put(users::update).delete(users::delete))
+        .route("/api/v1/users/{id}/password", put(users::reset_password))
         // Workspace settings (public read, admin write)
         .route("/api/v1/settings", get(settings::get_settings).put(settings::update_settings))
         // Logo upload

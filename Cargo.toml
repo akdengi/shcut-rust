@@ -38,6 +38,9 @@ reqwest = { version = "0.12", features = ["json"] }
 # URL parsing
 url = "2"
 
+# Email
+lettre = { version = "0.11", features = ["tokio1-native-tls"] }
+
 [profile.release]
 opt-level = 3
 lto = true
