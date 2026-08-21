@@ -34,7 +34,6 @@ pub struct UpdateUser {
     pub nickname: Option<String>,
     pub email: Option<String>,
     pub role: Option<String>,
-    pub password: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
