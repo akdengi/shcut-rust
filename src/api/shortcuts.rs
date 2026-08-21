@@ -535,7 +535,7 @@ pub async fn redirect(
     let shortcut_id = cached.id;
     let creator_id = cached.creator_id;
 
-    // Extract domain from target URL for OG URLs
+    // Extract domain from target URL for og:url
     let og_host = url::Url::parse(&target)
         .ok()
         .and_then(|u| {
@@ -550,6 +550,13 @@ pub async fn redirect(
                 .unwrap_or("localhost:5231")
                 .to_string()
         });
+
+    // Current server host for og:image (images are hosted here)
+    let current_host = headers
+        .get("host")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("localhost:5231")
+        .to_string();
 
     // Detect social media crawlers
     let ua = headers
@@ -588,7 +595,7 @@ pub async fn redirect(
         String::new()
     } else {
         let img_url = if cached.og_image.starts_with('/') {
-            format!("https://{}{}", og_host, cached.og_image)
+            format!("https://{}{}", current_host, cached.og_image)
         } else {
             cached.og_image.clone()
         };
