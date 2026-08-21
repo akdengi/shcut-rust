@@ -616,7 +616,7 @@ pub async fn redirect(
 <meta property="og:type" content="website" />
 <meta property="og:title" content="{og_title}" />
 <meta property="og:description" content="{og_description}" />
-<meta property="og:url" content="https://{og_host}/s/{name}" />
+<meta property="og:url" content="{og_target_url}" />
 {og_image}
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:title" content="{og_title}" />
@@ -631,8 +631,7 @@ pub async fn redirect(
         og_description = og_description,
         og_image = og_image,
         redirect_html = redirect_html,
-        og_host = html_escape(&og_host),
-        name = html_escape(&name),
+        og_target_url = html_escape(&target),
         target = html_escape(&target),
     );
 
