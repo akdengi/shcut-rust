@@ -588,7 +588,7 @@ pub async fn redirect(
         String::new()
     } else {
         let img_url = if cached.og_image.starts_with('/') {
-            format!("https://{}{}", host, cached.og_image)
+            format!("https://{}{}", og_host, cached.og_image)
         } else {
             cached.og_image.clone()
         };
