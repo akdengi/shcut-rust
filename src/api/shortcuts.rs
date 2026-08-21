@@ -535,12 +535,21 @@ pub async fn redirect(
     let shortcut_id = cached.id;
     let creator_id = cached.creator_id;
 
-    // Get host from request headers for OG URLs
-    let host = headers
-        .get("host")
-        .and_then(|v| v.to_str().ok())
-        .unwrap_or("localhost:5231")
-        .to_string();
+    // Extract domain from target URL for OG URLs
+    let og_host = url::Url::parse(&target)
+        .ok()
+        .and_then(|u| {
+            let host = u.host_str()?.to_string();
+            let port = u.port().map(|p| format!(":{}", p)).unwrap_or_default();
+            Some(format!("{}{}", host, port))
+        })
+        .unwrap_or_else(|| {
+            headers
+                .get("host")
+                .and_then(|v| v.to_str().ok())
+                .unwrap_or("localhost:5231")
+                .to_string()
+        });
 
     // Detect social media crawlers
     let ua = headers
@@ -607,7 +616,7 @@ pub async fn redirect(
 <meta property="og:type" content="website" />
 <meta property="og:title" content="{og_title}" />
 <meta property="og:description" content="{og_description}" />
-<meta property="og:url" content="https://{host}/s/{name}" />
+<meta property="og:url" content="https://{og_host}/s/{name}" />
 {og_image}
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:title" content="{og_title}" />
@@ -622,7 +631,7 @@ pub async fn redirect(
         og_description = og_description,
         og_image = og_image,
         redirect_html = redirect_html,
-        host = html_escape(&host),
+        og_host = html_escape(&og_host),
         name = html_escape(&name),
         target = html_escape(&target),
     );
