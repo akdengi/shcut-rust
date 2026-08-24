@@ -536,7 +536,7 @@ pub async fn redirect(
     let creator_id = cached.creator_id;
 
     // Extract domain from target URL for og:url
-    let og_host = url::Url::parse(&target)
+    let _og_host = url::Url::parse(&target)
         .ok()
         .and_then(|u| {
             let host = u.host_str()?.to_string();
