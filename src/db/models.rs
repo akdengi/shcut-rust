@@ -209,6 +209,7 @@ pub struct ApiKey {
     pub id: i64,
     pub user_id: i64,
     pub name: String,
+    #[allow(dead_code)]
     pub key_hash: String,
     pub key_prefix: String,
     pub created_ts: i64,
