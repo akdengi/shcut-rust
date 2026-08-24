@@ -11,6 +11,7 @@ Self-hosted URL shortener built with Rust and Nuxt 3.
 - **Roles** — admin, user (create/edit), view (read-only)
 - **JWT auth** — secure authentication with admin seeding from .env
 - **Password management** — self-service change, admin reset, forgot password via email
+- **i18n** — English and Russian localization, language selector in settings
 - **Dark mode** — automatic theme switching
 - **Instant redirects** — URL cache for zero-latency redirects
 
@@ -36,6 +37,7 @@ chmod +x deploy.sh
 - [User Guide](docs/guide.md) — how to use the application
 - [API Reference](docs/api.md) — endpoints, roles, parameters
 - [Deployment Guide](docs/deployment.md) — setup, migration, backup
+- [Localization](docs/i18n.md) — adding new languages, translation keys
 
 ## Roles
 

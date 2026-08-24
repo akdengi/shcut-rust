@@ -201,10 +201,11 @@ Go to **Settings → Workspace Settings**:
 ## Tips
 
 - **Quick copy:** hover over shortcut card → click the link icon to copy `/s/name` URL
-- **Tag filter:** click any tag badge to filter shortcuts by that tag
+- **Tag filter:** click tag buttons above the list to filter shortcuts by tag (multiple tags can be active)
 - **Dark mode:** click the sun/moon icon in the header
 - **Pagination:** choose "All" in the dropdown to show all shortcuts, or select a number for paginated view
 - **Analytics period:** use date range filter on stats page to analyze specific time periods
 - **Reset analytics:** admin can reset all analytics data for a shortcut from the stats page
 - **Close settings:** click the X button in top-right corner to return to main page
 - **Loading indicators:** buttons show "Saving...", "Creating...", etc. while requests are in progress
+- **Language:** go to Settings → Profile → Language to switch between English and Russian
