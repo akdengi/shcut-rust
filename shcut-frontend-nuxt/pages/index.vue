@@ -17,16 +17,6 @@
             />
           </div>
 
-          <!-- Tag filter -->
-          <select
-            v-model="tagFilter"
-            @change="handleFilterChange"
-            class="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-          >
-            <option value="">All tags</option>
-            <option v-for="tag in availableTags" :key="tag" :value="tag">{{ tag }}</option>
-          </select>
-
           <!-- Per page selector -->
           <select
             v-model="perPage"
@@ -83,6 +73,35 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
           </svg>
           New Shortcut
+        </button>
+      </div>
+
+      <!-- Tag toggle buttons -->
+      <div v-if="availableTags.length > 0" class="flex items-center gap-2 mb-4 flex-wrap">
+        <button
+          @click="clearTagFilter"
+          :class="[
+            'px-3 py-1.5 text-sm font-medium rounded-full transition-colors border',
+            activeTags.size === 0
+              ? 'bg-indigo-600 text-white border-indigo-600'
+              : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
+          ]"
+        >
+          All
+        </button>
+        <button
+          v-for="tag in availableTags"
+          :key="tag"
+          @click="toggleTag(tag)"
+          :class="[
+            'px-3 py-1.5 text-sm font-medium rounded-full transition-colors border',
+            activeTags.has(tag)
+              ? 'bg-indigo-600 text-white border-indigo-600'
+              : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
+          ]"
+        >
+          {{ tag }}
+          <span v-if="activeTags.has(tag)" class="ml-1 text-indigo-200">x</span>
         </button>
       </div>
 
@@ -335,7 +354,7 @@ const { success, error: showError } = useToast()
 
 const viewMode = ref<'cards' | 'table'>('cards')
 const perPage = ref(0)
-const tagFilter = ref('')
+const activeTags = ref<Set<string>>(new Set())
 const availableTags = ref<string[]>([])
 const showCreateDrawer = ref(false)
 const editingShortcut = ref<ShortcutWithTags | null>(null)
@@ -351,6 +370,9 @@ const sortedItems = computed(() => {
   if (searchQuery.value) {
     const q = searchQuery.value.toLowerCase()
     items = items.filter(s => s.name.toLowerCase().includes(q))
+  }
+  if (activeTags.value.size > 0) {
+    items = items.filter(s => s.tags?.some(t => activeTags.value.has(t)))
   }
   items.sort((a, b) => {
     const valA = a[sortField.value]
@@ -377,7 +399,6 @@ const sortIcon = (field: 'id' | 'name') => {
 
 const loadShortcuts = () => {
   const params: any = { per_page: perPage.value || 9999 }
-  if (tagFilter.value) params.tag = tagFilter.value
   shortcutsStore.fetchShortcuts(params)
 }
 
@@ -399,19 +420,30 @@ onMounted(async () => {
 
 const changePage = (page: number) => {
   const params: any = { page, per_page: perPage.value || 9999 }
-  if (tagFilter.value) params.tag = tagFilter.value
   shortcutsStore.fetchShortcuts(params)
 }
 
 const handleFilterChange = () => {
   const params: any = { page: 1, per_page: perPage.value || 9999 }
-  if (tagFilter.value) params.tag = tagFilter.value
   shortcutsStore.fetchShortcuts(params)
 }
 
+const toggleTag = (tag: string) => {
+  const newSet = new Set(activeTags.value)
+  if (newSet.has(tag)) {
+    newSet.delete(tag)
+  } else {
+    newSet.add(tag)
+  }
+  activeTags.value = newSet
+}
+
+const clearTagFilter = () => {
+  activeTags.value = new Set()
+}
+
 const handleTagClick = (tag: string) => {
-  tagFilter.value = tag
-  handleFilterChange()
+  toggleTag(tag)
 }
 
 const openStats = (shortcut: ShortcutWithTags) => {

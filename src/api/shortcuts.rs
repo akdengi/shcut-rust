@@ -26,7 +26,7 @@ pub async fn list(
     Query(params): Query<ListQuery>,
 ) -> Result<Json<PaginatedResponse<ShortcutWithTags>>, StatusCode> {
     let page = params.page.unwrap_or(1).max(1);
-    let per_page = params.per_page.unwrap_or(20).min(100);
+    let per_page = params.per_page.unwrap_or(20).min(1000);
     let offset = (page - 1) * per_page;
 
     // Build query
