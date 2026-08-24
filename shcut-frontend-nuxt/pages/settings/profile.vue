@@ -180,6 +180,7 @@ const onLocaleChange = (event: Event) => {
   nuxtApp.$i18n.locale.value = newLocale
   const cookie = useCookie('shcut_i18n', { maxAge: 365 * 24 * 60 * 60 })
   cookie.value = newLocale
+  window.location.reload()
 }
 
 onMounted(async () => {
