@@ -12,7 +12,7 @@
             <input
               v-model="searchQuery"
               type="text"
-              placeholder="Search shortcuts..."
+              :placeholder="$t('shortcuts.searchPlaceholder')"
               class="pl-9 pr-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 w-full sm:w-48"
             />
           </div>
@@ -23,7 +23,7 @@
             @change="handleFilterChange"
             class="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-1 focus:ring-indigo-500"
           >
-            <option :value="0">All</option>
+            <option :value="0">{{ $t('common.all') }}</option>
             <option :value="10">10</option>
             <option :value="20">20</option>
             <option :value="50">50</option>
@@ -72,7 +72,7 @@
           <svg class="-ml-1 mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
           </svg>
-          New Shortcut
+          {{ $t('shortcuts.new') }}
         </button>
       </div>
 
@@ -87,7 +87,7 @@
               : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
           ]"
         >
-          All
+          {{ $t('common.all') }}
         </button>
         <button
           v-for="tag in availableTags"
@@ -106,14 +106,14 @@
       </div>
 
       <!-- Loading -->
-      <div v-if="shortcutsStore.loading" class="text-center py-12 text-gray-500">Loading...</div>
+      <div v-if="shortcutsStore.loading" class="text-center py-12 text-gray-500">{{ $t('common.loading') }}</div>
 
       <!-- Empty state -->
       <EmptyState
         v-else-if="shortcutsStore.items.length === 0"
-        title="No shortcuts"
-        description="Create your first shortcut to get started."
-        action-text="Create Shortcut"
+        :title="$t('shortcuts.emptyTitle')"
+        :description="$t('shortcuts.emptyDescription')"
+        :action-text="$t('shortcuts.emptyAction')"
         @action="showCreateDrawer = true"
       />
 
@@ -137,17 +137,17 @@
             <thead>
               <tr class="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
                 <th @click="toggleSort('id')" class="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400 cursor-pointer hover:text-gray-700 dark:hover:text-gray-300 select-none">
-                  ID{{ sortIcon('id') }}
+                  {{ $t('common.id') }}{{ sortIcon('id') }}
                 </th>
                 <th @click="toggleSort('name')" class="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400 cursor-pointer hover:text-gray-700 dark:hover:text-gray-300 select-none">
-                  Name{{ sortIcon('name') }}
+                  {{ $t('common.name') }}{{ sortIcon('name') }}
                 </th>
-                <th class="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Short Link</th>
-                <th class="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Target URL</th>
-                <th class="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Tags</th>
-                <th class="px-4 py-3 text-center font-medium text-gray-500 dark:text-gray-400">Views</th>
-                <th class="px-4 py-3 text-center font-medium text-gray-500 dark:text-gray-400">Visibility</th>
-                <th class="px-4 py-3 text-right font-medium text-gray-500 dark:text-gray-400">Actions</th>
+                <th class="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">{{ $t('shortcuts.table.shortLink') }}</th>
+                <th class="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">{{ $t('shortcuts.table.targetUrl') }}</th>
+                <th class="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">{{ $t('shortcuts.table.tags') }}</th>
+                <th class="px-4 py-3 text-center font-medium text-gray-500 dark:text-gray-400">{{ $t('shortcuts.table.views') }}</th>
+                <th class="px-4 py-3 text-center font-medium text-gray-500 dark:text-gray-400">{{ $t('shortcuts.table.visibility') }}</th>
+                <th class="px-4 py-3 text-right font-medium text-gray-500 dark:text-gray-400">{{ $t('common.actions') }}</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
@@ -172,7 +172,7 @@
                     <button
                       @click="copyShortcutLink(shortcut.name)"
                       class="text-gray-400 hover:text-indigo-500 transition-colors"
-                      title="Copy link"
+                      :title="$t('common.copyLink')"
                     >
                       <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -199,9 +199,9 @@
                     v-if="shortcut.visibility === 'public'"
                     class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400"
                   >
-                    Public
+                    {{ $t('common.public') }}
                   </span>
-                  <span v-else class="text-gray-400 dark:text-gray-500 text-xs">Workspace</span>
+                  <span v-else class="text-gray-400 dark:text-gray-500 text-xs">{{ $t('common.workspace') }}</span>
                 </td>
                 <td class="px-4 py-3 text-right">
                   <div class="flex items-center justify-end gap-1">
@@ -209,7 +209,7 @@
                       :href="`/s/${shortcut.name}`"
                       target="_blank"
                       class="p-1.5 rounded-lg text-gray-400 hover:text-green-600 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors"
-                      title="Open shortcut"
+                      :title="$t('common.openShortcut')"
                     >
                       <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
@@ -218,7 +218,7 @@
                     <button
                       @click="openStats(shortcut)"
                       class="p-1.5 rounded-lg text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                      title="Stats"
+                      :title="$t('common.stats')"
                     >
                       <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
@@ -228,7 +228,7 @@
                       v-if="authStore.canEdit"
                       @click="editShortcut(shortcut)"
                       class="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                      title="Edit"
+                      :title="$t('common.edit')"
                     >
                       <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -238,7 +238,7 @@
                       v-if="authStore.canDelete"
                       @click="confirmDelete(shortcut)"
                       class="p-1.5 rounded-lg text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                      title="Delete"
+                      :title="$t('common.delete')"
                     >
                       <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -256,7 +256,7 @@
       <div class="mt-6 flex items-center justify-between">
         <div class="flex items-center gap-4">
           <p class="text-sm text-gray-500 dark:text-gray-400">
-            {{ shortcutsStore.total }} shortcuts
+            {{ $t('shortcuts.totalCount', { count: shortcutsStore.total }) }}
           </p>
           <div class="flex items-center gap-1 border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden">
             <button
@@ -267,9 +267,9 @@
                   ? 'bg-indigo-600 text-white'
                   : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
               ]"
-              :title="sortField === 'id' ? (sortDir === 'asc' ? 'Sorted ID ↑' : 'Sorted ID ↓') : 'Sort by ID'"
+              :title="sortField === 'id' ? (sortDir === 'asc' ? $t('shortcuts.sortedByIdAsc') : $t('shortcuts.sortedByIdDesc')) : $t('shortcuts.sortById')"
             >
-              ID
+              {{ $t('common.id') }}
               <span v-if="sortField === 'id'" class="ml-1">{{ sortDir === 'asc' ? '↑' : '↓' }}</span>
             </button>
             <button
@@ -280,9 +280,9 @@
                   ? 'bg-indigo-600 text-white'
                   : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
               ]"
-              :title="sortField === 'name' ? (sortDir === 'asc' ? 'Sorted Name ↑' : 'Sorted Name ↓') : 'Sort by Name'"
+              :title="sortField === 'name' ? (sortDir === 'asc' ? $t('shortcuts.sortedByNameAsc') : $t('shortcuts.sortedByNameDesc')) : $t('shortcuts.sortByName')"
             >
-              Name
+              {{ $t('common.name') }}
               <span v-if="sortField === 'name'" class="ml-1">{{ sortDir === 'asc' ? '↑' : '↓' }}</span>
             </button>
           </div>
@@ -293,7 +293,7 @@
             :disabled="shortcutsStore.page <= 1"
             class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm disabled:opacity-50 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
           >
-            Previous
+            {{ $t('common.previous') }}
           </button>
           <span class="text-sm text-gray-600 dark:text-gray-400">
             {{ shortcutsStore.page }} / {{ shortcutsStore.totalPages }}
@@ -303,7 +303,7 @@
             :disabled="shortcutsStore.page >= shortcutsStore.totalPages"
             class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm disabled:opacity-50 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
           >
-            Next
+            {{ $t('common.next') }}
           </button>
         </nav>
       </div>
@@ -316,7 +316,7 @@
         <div class="h-full flex flex-col">
           <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-              {{ editingShortcut ? 'Edit Shortcut' : 'New Shortcut' }}
+              {{ editingShortcut ? $t('shortcuts.edit') : $t('shortcuts.new') }}
             </h3>
           </div>
           <div class="flex-1 overflow-y-auto px-6 py-4">
@@ -334,9 +334,9 @@
     <!-- Delete Confirmation -->
     <ConfirmDialog
       v-model="showDeleteConfirm"
-      title="Delete Shortcut"
-      :message="`Are you sure you want to delete '${deletingShortcut?.name}'?`"
-      confirm-text="Delete"
+      :title="$t('shortcuts.delete')"
+      :message="$t('common.deleteConfirm', { name: deletingShortcut?.name })"
+      :confirm-text="$t('common.delete')"
       :danger="true"
       @confirm="handleDelete"
     />
@@ -351,6 +351,7 @@ definePageMeta({ middleware: 'auth' })
 const shortcutsStore = useShortcutsStore()
 const authStore = useAuthStore()
 const { success, error: showError } = useToast()
+const { t } = useI18n()
 
 const viewMode = ref<'cards' | 'table'>('cards')
 const perPage = ref(0)
@@ -454,7 +455,7 @@ const copyShortcutLink = async (name: string) => {
   const link = `${window.location.origin}/s/${name}`
   try {
     await navigator.clipboard.writeText(link)
-    success('Link copied')
+    success(t('shortcuts.toast.linkCopied'))
   } catch {
     // fallback
     const input = document.createElement('input')
@@ -463,7 +464,7 @@ const copyShortcutLink = async (name: string) => {
     input.select()
     document.execCommand('copy')
     document.body.removeChild(input)
-    success('Link copied')
+    success(t('shortcuts.toast.linkCopied'))
   }
 }
 
@@ -481,7 +482,7 @@ const handleDelete = async () => {
   if (!deletingShortcut.value) return
   try {
     await shortcutsStore.deleteShortcut(deletingShortcut.value.id)
-    success('Shortcut deleted')
+    success(t('shortcuts.toast.deleted'))
     loadShortcuts()
   } catch {
     // error handled by toast
@@ -495,18 +496,18 @@ const handleShortcutSubmit = async (payload: ShortcutCreatePayload) => {
   try {
     if (editingShortcut.value) {
       await shortcutsStore.updateShortcut(editingShortcut.value.id, payload)
-      success('Shortcut updated')
+      success(t('shortcuts.toast.updated'))
     } else {
       await shortcutsStore.createShortcut(payload)
-      success('Shortcut created')
+      success(t('shortcuts.toast.created'))
     }
     closeDrawer()
     loadTags()
   } catch (e: any) {
     if (e?.statusCode === 409) {
-      showError('Shortcut with this name already exists')
+      showError(t('shortcuts.error.nameExists'))
     } else {
-      showError(e?.data?.message || 'Failed to save shortcut')
+      showError(e?.data?.message || t('shortcuts.error.saveFailed'))
     }
   } finally {
     submitting.value = false

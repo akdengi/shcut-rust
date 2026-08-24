@@ -9,19 +9,19 @@
       </div>
 
       <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-8">
-        <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">Reset your password</h2>
-        <p class="text-sm text-gray-600 dark:text-gray-400 mb-6">Enter your email and we'll send you a reset link.</p>
+        <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">{{ $t('auth.forgotPassword.heading') }}</h2>
+        <p class="text-sm text-gray-600 dark:text-gray-400 mb-6">{{ $t('auth.forgotPassword.description') }}</p>
 
         <form v-if="!sent" @submit.prevent="handleForgot" class="space-y-4">
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ $t('auth.forgotPassword.email') }}</label>
             <input
               v-model="form.email"
               type="email"
               required
               autocomplete="email"
               class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-              placeholder="admin@example.com"
+              :placeholder="$t('auth.forgotPassword.emailPlaceholder')"
             />
           </div>
 
@@ -34,7 +34,7 @@
             :disabled="loading"
             class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
           >
-            {{ loading ? 'Sending...' : 'Send reset link' }}
+            {{ loading ? $t('auth.forgotPassword.sending') : $t('auth.forgotPassword.sendResetLink') }}
           </button>
         </form>
 
@@ -44,11 +44,11 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <p class="text-sm text-gray-600 dark:text-gray-400">If an account with that email exists, a reset link has been sent.</p>
+          <p class="text-sm text-gray-600 dark:text-gray-400">{{ $t('auth.forgotPassword.successMessage') }}</p>
         </div>
 
         <div class="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
-          <NuxtLink to="/auth/login" class="text-blue-600 hover:text-blue-500 font-medium">Back to sign in</NuxtLink>
+          <NuxtLink to="/auth/login" class="text-blue-600 hover:text-blue-500 font-medium">{{ $t('auth.forgotPassword.backToSignIn') }}</NuxtLink>
         </div>
       </div>
     </div>
@@ -58,6 +58,7 @@
 <script setup lang="ts">
 definePageMeta({ layout: false })
 
+const { t } = useI18n()
 const { settings, fetchSettings } = useWorkspace()
 
 onMounted(() => fetchSettings())
@@ -78,9 +79,9 @@ const handleForgot = async () => {
     sent.value = true
   } catch (e: any) {
     if (e?.statusCode === 501) {
-      error.value = 'Password reset is not configured on this server'
+      error.value = t('auth.forgotPassword.notConfigured')
     } else {
-      error.value = 'Something went wrong. Please try again.'
+      error.value = t('auth.forgotPassword.somethingWentWrong')
     }
   } finally {
     loading.value = false

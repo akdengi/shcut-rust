@@ -5,7 +5,7 @@
       <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
       </svg>
-      Back
+      {{ $t('common.back') }}
     </button>
 
     <!-- Loading -->
@@ -19,12 +19,12 @@
         <div>
           <div class="flex items-center gap-3">
             <h1 class="text-2xl font-bold text-gray-900 dark:text-white">/{{ shortcut.name }}</h1>
-            <span v-if="shortcut.visibility === 'public'" class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400">Public</span>
-            <span v-else class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400">Workspace</span>
+            <span v-if="shortcut.visibility === 'public'" class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400">{{ $t('common.public') }}</span>
+            <span v-else class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400">{{ $t('common.workspace') }}</span>
           </div>
           <div class="mt-2 flex items-center gap-2">
             <span class="text-sm font-mono text-indigo-600 dark:text-indigo-400">{{ serverUrl }}/s/{{ shortcut.name }}</span>
-            <button @click="copyLink" class="p-1 rounded text-gray-400 hover:text-indigo-500 transition-colors" title="Copy">
+            <button @click="copyLink" class="p-1 rounded text-gray-400 hover:text-indigo-500 transition-colors" :title="$t('shortcutDetail.copy')">
               <svg v-if="!copied" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
               <svg v-else class="w-4 h-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
             </button>
@@ -35,8 +35,8 @@
           </a>
         </div>
         <div class="flex items-center gap-2 shrink-0">
-          <button v-if="authStore.canEdit" @click="showEditForm = true" class="px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">Edit</button>
-          <button v-if="authStore.canDelete" @click="showDeleteConfirm = true" class="px-3 py-2 text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors">Delete</button>
+          <button v-if="authStore.canEdit" @click="showEditForm = true" class="px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">{{ $t('common.edit') }}</button>
+          <button v-if="authStore.canDelete" @click="showDeleteConfirm = true" class="px-3 py-2 text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors">{{ $t('common.delete') }}</button>
         </div>
       </div>
 
@@ -48,42 +48,42 @@
       <!-- Date Range Filter + Reset -->
       <div class="flex flex-wrap items-center gap-3 mb-6">
         <div class="flex items-center gap-2">
-          <label class="text-sm text-gray-500 dark:text-gray-400">From:</label>
+          <label class="text-sm text-gray-500 dark:text-gray-400">{{ $t('shortcutDetail.from') }}</label>
           <input v-model="dateFrom" type="date" class="px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white" />
         </div>
         <div class="flex items-center gap-2">
-          <label class="text-sm text-gray-500 dark:text-gray-400">To:</label>
+          <label class="text-sm text-gray-500 dark:text-gray-400">{{ $t('shortcutDetail.to') }}</label>
           <input v-model="dateTo" type="date" class="px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white" />
         </div>
-        <button @click="loadAnalytics" class="px-3 py-1 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors">Apply</button>
-        <button @click="clearDates" class="px-3 py-1 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">Clear</button>
+        <button @click="loadAnalytics" class="px-3 py-1 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors">{{ $t('common.apply') }}</button>
+        <button @click="clearDates" class="px-3 py-1 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">{{ $t('common.clear') }}</button>
         <div class="flex-1"></div>
-        <button v-if="authStore.isAdmin" @click="showResetConfirm = true" class="px-3 py-1 text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors">Reset Analytics</button>
+        <button v-if="authStore.isAdmin" @click="showResetConfirm = true" class="px-3 py-1 text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors">{{ $t('shortcutDetail.resetAnalytics') }}</button>
       </div>
 
       <!-- Stats Grid -->
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
         <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
-          <p class="text-sm text-gray-500 dark:text-gray-400">Total Views</p>
+          <p class="text-sm text-gray-500 dark:text-gray-400">{{ $t('shortcutDetail.totalViews') }}</p>
           <p class="mt-1 text-2xl font-bold text-gray-900 dark:text-white">{{ shortcut.view_count }}</p>
         </div>
         <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
-          <p class="text-sm text-gray-500 dark:text-gray-400">Countries</p>
+          <p class="text-sm text-gray-500 dark:text-gray-400">{{ $t('shortcutDetail.countries') }}</p>
           <p class="mt-1 text-2xl font-bold text-gray-900 dark:text-white">{{ analytics?.countries?.length || 0 }}</p>
         </div>
         <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
-          <p class="text-sm text-gray-500 dark:text-gray-400">Browsers</p>
+          <p class="text-sm text-gray-500 dark:text-gray-400">{{ $t('shortcutDetail.browsers') }}</p>
           <p class="mt-1 text-2xl font-bold text-gray-900 dark:text-white">{{ analytics?.browsers?.length || 0 }}</p>
         </div>
         <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
-          <p class="text-sm text-gray-500 dark:text-gray-400">Referrers</p>
+          <p class="text-sm text-gray-500 dark:text-gray-400">{{ $t('shortcutDetail.referrers') }}</p>
           <p class="mt-1 text-2xl font-bold text-gray-900 dark:text-white">{{ analytics?.references?.length || 0 }}</p>
         </div>
       </div>
 
       <!-- Views Chart -->
       <div v-if="analytics?.views_by_date?.length" class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 mb-8">
-        <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-4">Views by Date</h3>
+        <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-4">{{ $t('shortcutDetail.viewsByDate') }}</h3>
         <div class="flex gap-2">
           <!-- Y-axis labels -->
           <div class="flex flex-col justify-between h-32 text-right w-8">
@@ -106,7 +106,7 @@
       <!-- Analytics Grid -->
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
         <div v-if="analytics?.devices?.length" class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
-          <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-3">Devices</h3>
+          <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-3">{{ $t('shortcutDetail.devices') }}</h3>
           <div class="space-y-2">
             <div v-for="item in analytics.devices" :key="item.name" class="flex items-center justify-between">
               <span class="text-sm text-gray-600 dark:text-gray-400">{{ item.name }}</span>
@@ -116,7 +116,7 @@
         </div>
 
         <div v-if="analytics?.browsers?.length" class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
-          <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-3">Browsers</h3>
+          <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-3">{{ $t('shortcutDetail.browsers') }}</h3>
           <div class="space-y-2">
             <div v-for="item in analytics.browsers" :key="item.name" class="flex items-center justify-between">
               <span class="text-sm text-gray-600 dark:text-gray-400">{{ item.name }}</span>
@@ -126,7 +126,7 @@
         </div>
 
         <div v-if="analytics?.os?.length" class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
-          <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-3">Operating Systems</h3>
+          <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-3">{{ $t('shortcutDetail.operatingSystems') }}</h3>
           <div class="space-y-2">
             <div v-for="item in analytics.os" :key="item.name" class="flex items-center justify-between">
               <span class="text-sm text-gray-600 dark:text-gray-400">{{ item.name }}</span>
@@ -136,7 +136,7 @@
         </div>
 
         <div v-if="analytics?.countries?.length" class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
-          <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-3">Countries</h3>
+          <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-3">{{ $t('shortcutDetail.countries') }}</h3>
           <div class="space-y-2">
             <div v-for="item in analytics.countries" :key="item.name" class="flex items-center justify-between">
               <span class="text-sm text-gray-600 dark:text-gray-400">{{ item.name }}</span>
@@ -146,7 +146,7 @@
         </div>
 
         <div v-if="analytics?.references?.length" class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
-          <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-3">Referrers</h3>
+          <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-3">{{ $t('shortcutDetail.referrers') }}</h3>
           <div class="space-y-2">
             <div v-for="item in analytics.references" :key="item.name" class="flex items-center justify-between">
               <span class="text-sm text-gray-600 dark:text-gray-400 truncate max-w-[150px]">{{ item.name }}</span>
@@ -156,7 +156,7 @@
         </div>
 
         <div v-if="analytics?.utm_sources?.length" class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
-          <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-3">UTM Sources</h3>
+          <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-3">{{ $t('shortcutDetail.utmSources') }}</h3>
           <div class="space-y-2">
             <div v-for="item in analytics.utm_sources" :key="item.name" class="flex items-center justify-between">
               <span class="text-sm text-gray-600 dark:text-gray-400">{{ item.name }}</span>
@@ -166,7 +166,7 @@
         </div>
 
         <div v-if="analytics?.utm_mediums?.length" class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
-          <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-3">UTM Mediums</h3>
+          <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-3">{{ $t('shortcutDetail.utmMediums') }}</h3>
           <div class="space-y-2">
             <div v-for="item in analytics.utm_mediums" :key="item.name" class="flex items-center justify-between">
               <span class="text-sm text-gray-600 dark:text-gray-400">{{ item.name }}</span>
@@ -176,7 +176,7 @@
         </div>
 
         <div v-if="analytics?.utm_campaigns?.length" class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
-          <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-3">UTM Campaigns</h3>
+          <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-3">{{ $t('shortcutDetail.utmCampaigns') }}</h3>
           <div class="space-y-2">
             <div v-for="item in analytics.utm_campaigns" :key="item.name" class="flex items-center justify-between">
               <span class="text-sm text-gray-600 dark:text-gray-400">{{ item.name }}</span>
@@ -189,22 +189,22 @@
       <!-- Activity Log -->
       <div v-if="activities.length" class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
         <div class="px-5 py-4 border-b border-gray-200 dark:border-gray-700">
-          <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Activity Log</h3>
+          <h3 class="text-sm font-semibold text-gray-900 dark:text-white">{{ $t('shortcutDetail.activityLog') }}</h3>
         </div>
         <div class="overflow-x-auto">
           <table class="w-full text-sm">
             <thead>
               <tr class="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
-                <th class="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Time</th>
-                <th class="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">IP</th>
-                <th class="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Country</th>
-                <th class="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Device</th>
-                <th class="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">OS</th>
-                <th class="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Browser</th>
-                <th class="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Referrer</th>
-                <th class="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">UTM Source</th>
-                <th class="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">UTM Medium</th>
-                <th class="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">UTM Campaign</th>
+                <th class="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">{{ $t('shortcutDetail.activityLogHeader.time') }}</th>
+                <th class="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">{{ $t('shortcutDetail.activityLogHeader.ip') }}</th>
+                <th class="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">{{ $t('shortcutDetail.activityLogHeader.country') }}</th>
+                <th class="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">{{ $t('shortcutDetail.activityLogHeader.device') }}</th>
+                <th class="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">{{ $t('shortcutDetail.activityLogHeader.os') }}</th>
+                <th class="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">{{ $t('shortcutDetail.activityLogHeader.browser') }}</th>
+                <th class="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">{{ $t('shortcutDetail.activityLogHeader.referrer') }}</th>
+                <th class="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">{{ $t('shortcutDetail.activityLogHeader.utmSource') }}</th>
+                <th class="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">{{ $t('shortcutDetail.activityLogHeader.utmMedium') }}</th>
+                <th class="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">{{ $t('shortcutDetail.activityLogHeader.utmCampaign') }}</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
@@ -215,7 +215,7 @@
                 <td class="px-4 py-3 text-gray-500 dark:text-gray-400 text-xs">{{ activity.device || '—' }}</td>
                 <td class="px-4 py-3 text-gray-500 dark:text-gray-400 text-xs">{{ activity.os || '—' }}</td>
                 <td class="px-4 py-3 text-gray-500 dark:text-gray-400 text-xs">{{ activity.browser || '—' }}</td>
-                <td class="px-4 py-3 text-gray-500 dark:text-gray-400 text-xs truncate max-w-[150px]">{{ activity.referer_domain || 'Direct' }}</td>
+                <td class="px-4 py-3 text-gray-500 dark:text-gray-400 text-xs truncate max-w-[150px]">{{ activity.referer_domain || $t('shortcutDetail.direct') }}</td>
                 <td class="px-4 py-3 text-gray-500 dark:text-gray-400 text-xs">{{ activity.utm_source || '—' }}</td>
                 <td class="px-4 py-3 text-gray-500 dark:text-gray-400 text-xs">{{ activity.utm_medium || '—' }}</td>
                 <td class="px-4 py-3 text-gray-500 dark:text-gray-400 text-xs">{{ activity.utm_campaign || '—' }}</td>
@@ -225,10 +225,10 @@
         </div>
         <!-- Pagination -->
         <div v-if="totalActivityPages > 1" class="px-5 py-3 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
-          <span class="text-xs text-gray-500 dark:text-gray-400">Page {{ activityPage }} of {{ totalActivityPages }} ({{ activities.length }} total)</span>
+          <span class="text-xs text-gray-500 dark:text-gray-400">{{ $t('shortcutDetail.pagination', { page: activityPage, totalPages: totalActivityPages, count: activities.length }) }}</span>
           <div class="flex gap-2">
-            <button @click="activityPage--" :disabled="activityPage <= 1" class="px-3 py-1 text-xs font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">Prev</button>
-            <button @click="activityPage++" :disabled="activityPage >= totalActivityPages" class="px-3 py-1 text-xs font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">Next</button>
+            <button @click="activityPage--" :disabled="activityPage <= 1" class="px-3 py-1 text-xs font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">{{ $t('common.prev') }}</button>
+            <button @click="activityPage++" :disabled="activityPage >= totalActivityPages" class="px-3 py-1 text-xs font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">{{ $t('common.next') }}</button>
           </div>
         </div>
       </div>
@@ -242,7 +242,7 @@
           <div class="relative w-full max-w-lg bg-white dark:bg-gray-900 shadow-xl overflow-y-auto">
             <div class="p-6">
               <div class="flex items-center justify-between mb-6">
-                <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Edit Shortcut</h2>
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-white">{{ $t('shortcuts.edit') }}</h2>
                 <button @click="showEditForm = false" class="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800">
                   <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>
@@ -255,10 +255,10 @@
     </Teleport>
 
     <!-- Delete confirm -->
-    <ConfirmDialog v-model="showDeleteConfirm" title="Delete Shortcut" :message="`Are you sure you want to delete '${shortcut?.name}'?`" confirm-text="Delete" :danger="true" @confirm="handleDelete" />
+    <ConfirmDialog v-model="showDeleteConfirm" :title="$t('shortcutDetail.deleteTitle')" :message="$t('shortcutDetail.deleteMessage', { name: shortcut?.name })" :confirm-text="$t('common.delete')" :danger="true" @confirm="handleDelete" />
 
     <!-- Reset confirm -->
-    <ConfirmDialog v-model="showResetConfirm" title="Reset Analytics" message="This will delete all analytics data for this shortcut. This cannot be undone." confirm-text="Reset" :danger="true" @confirm="handleReset" />
+    <ConfirmDialog v-model="showResetConfirm" :title="$t('shortcutDetail.resetAnalyticsTitle')" :message="$t('shortcutDetail.resetAnalyticsMessage')" :confirm-text="$t('shortcutDetail.resetAnalytics')" :danger="true" @confirm="handleReset" />
   </div>
 </template>
 
@@ -270,6 +270,7 @@ import type { ShortcutAnalytics } from '~/types/api'
 
 definePageMeta({ middleware: 'auth' })
 
+const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const shortcutsStore = useShortcutsStore()
@@ -353,7 +354,7 @@ onMounted(async () => {
     await shortcutsStore.fetchShortcut(id)
     await loadAnalytics()
   } catch {
-    toast.error('Failed to load shortcut')
+    toast.error(t('shortcutDetail.error.loadFailed'))
     await navigateTo('/')
   } finally {
     loading.value = false
@@ -366,7 +367,7 @@ const copyLink = async () => {
   try {
     await navigator.clipboard.writeText(link)
     copied.value = true
-    toast.success('Link copied')
+    toast.success(t('shortcutDetail.toast.linkCopied'))
     setTimeout(() => { copied.value = false }, 2000)
   } catch {
     const input = document.createElement('input')
@@ -376,7 +377,7 @@ const copyLink = async () => {
     document.execCommand('copy')
     document.body.removeChild(input)
     copied.value = true
-    toast.success('Link copied')
+    toast.success(t('shortcutDetail.toast.linkCopied'))
     setTimeout(() => { copied.value = false }, 2000)
   }
 }
@@ -386,10 +387,10 @@ const handleEditSubmit = async (payload: any) => {
   submitting.value = true
   try {
     await shortcutsStore.updateShortcut(shortcut.value.id, payload)
-    toast.success('Shortcut updated')
+    toast.success(t('shortcutDetail.toast.shortcutUpdated'))
     showEditForm.value = false
   } catch (e: any) {
-    toast.error(e?.data?.message || 'Failed to update')
+    toast.error(e?.data?.message || t('shortcutDetail.error.updateFailed'))
   } finally {
     submitting.value = false
   }
@@ -399,10 +400,10 @@ const handleDelete = async () => {
   if (!shortcut.value) return
   try {
     await shortcutsStore.deleteShortcut(shortcut.value.id)
-    toast.success('Shortcut deleted')
+    toast.success(t('shortcutDetail.toast.shortcutDeleted'))
     await navigateTo('/')
   } catch (e: any) {
-    toast.error(e?.data?.message || 'Failed to delete')
+    toast.error(e?.data?.message || t('shortcutDetail.error.deleteFailed'))
   }
   showDeleteConfirm.value = false
 }
@@ -414,11 +415,11 @@ const handleReset = async () => {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${authStore.token}` },
     })
-    toast.success('Analytics reset')
+    toast.success(t('shortcutDetail.toast.analyticsReset'))
     await shortcutsStore.fetchShortcut(shortcut.value.id)
     await loadAnalytics()
   } catch (e: any) {
-    toast.error(e?.data?.message || 'Failed to reset analytics')
+    toast.error(e?.data?.message || t('shortcutDetail.error.resetFailed'))
   }
   showResetConfirm.value = false
 }

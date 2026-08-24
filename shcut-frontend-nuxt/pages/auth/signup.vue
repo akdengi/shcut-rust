@@ -6,51 +6,51 @@
           <img :src="settings.logo_url" :alt="settings.company_name" class="w-16 h-16 mx-auto rounded-xl object-contain mb-4" />
         </template>
         <h1 class="text-3xl font-bold text-gray-900 dark:text-white">{{ settings.company_name }}</h1>
-        <p class="mt-2 text-gray-600 dark:text-gray-400">Create your account</p>
+        <p class="mt-2 text-gray-600 dark:text-gray-400">{{ $t('auth.signup.subtitle') }}</p>
       </div>
 
       <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-8">
         <!-- Registration disabled -->
         <div v-if="!registrationAllowed" class="text-center">
           <div class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 text-yellow-700 dark:text-yellow-400 px-4 py-3 rounded-md mb-4">
-            Registration is currently disabled. Please contact an administrator.
+            {{ $t('auth.signup.registrationDisabled') }}
           </div>
           <NuxtLink to="/auth/login" class="text-blue-600 hover:text-blue-500 font-medium">
-            Go to Sign in
+            {{ $t('auth.signup.goToSignIn') }}
           </NuxtLink>
         </div>
 
         <!-- Registration form -->
         <template v-else>
-          <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">Sign up</h2>
+          <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">{{ $t('auth.signup.heading') }}</h2>
 
           <form @submit.prevent="handleRegister" class="space-y-4">
             <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nickname</label>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ $t('auth.signup.nickname') }}</label>
               <input
                 v-model="form.nickname"
                 type="text"
                 required
                 autocomplete="nickname"
                 class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                placeholder="admin"
+                :placeholder="$t('auth.signup.nicknamePlaceholder')"
               />
             </div>
 
             <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ $t('auth.signup.email') }}</label>
               <input
                 v-model="form.email"
                 type="email"
                 required
                 autocomplete="email"
                 class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                placeholder="admin@example.com"
+                :placeholder="$t('auth.signup.emailPlaceholder')"
               />
             </div>
 
             <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Password</label>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ $t('auth.signup.password') }}</label>
               <div class="relative">
                 <input
                   v-model="form.password"
@@ -59,7 +59,7 @@
                   minlength="6"
                   autocomplete="new-password"
                   class="w-full px-3 py-2 pr-10 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                  placeholder="••••••"
+                  :placeholder="$t('auth.signup.passwordPlaceholder')"
                 />
                 <button type="button" @click="showPassword = !showPassword" class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
                   <svg v-if="!showPassword" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -74,7 +74,7 @@
             </div>
 
             <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Confirm password</label>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ $t('auth.signup.confirmPassword') }}</label>
               <div class="relative">
                 <input
                   v-model="form.confirmPassword"
@@ -106,13 +106,13 @@
               :disabled="loading"
               class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
             >
-              {{ loading ? 'Creating account...' : 'Sign up' }}
+              {{ loading ? $t('auth.signup.creatingAccount') : $t('auth.signup.signUp') }}
             </button>
           </form>
 
           <div class="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
-            Already have an account?
-            <NuxtLink to="/auth/login" class="text-blue-600 hover:text-blue-500 font-medium">Sign in</NuxtLink>
+            {{ $t('auth.signup.hasAccount') }}
+            <NuxtLink to="/auth/login" class="text-blue-600 hover:text-blue-500 font-medium">{{ $t('auth.signup.signIn') }}</NuxtLink>
           </div>
         </template>
       </div>
@@ -123,6 +123,7 @@
 <script setup lang="ts">
 definePageMeta({ layout: false })
 
+const { t } = useI18n()
 const authStore = useAuthStore()
 const { settings, fetchSettings } = useWorkspace()
 const { success } = useToast()
@@ -149,23 +150,23 @@ const handleRegister = async () => {
   loading.value = true
   error.value = ''
   if (form.password !== form.confirmPassword) {
-    error.value = 'Passwords do not match'
+    error.value = t('auth.signup.passwordsNoMatch')
     loading.value = false
     return
   }
   try {
     await authStore.register(form.email, form.nickname, form.password)
-    success('Account created!')
+    success(t('auth.signup.accountCreated'))
     navigateTo('/')
   } catch (e: any) {
     if (e?.statusCode === 403) {
-      error.value = 'Registration is disabled'
+      error.value = t('auth.signup.registrationDisabled')
     } else if (e?.statusCode === 409) {
-      error.value = 'User with this email already exists'
+      error.value = t('auth.signup.emailExists')
     } else if (e?.statusCode === 400) {
-      error.value = 'Invalid input. Password must be at least 6 characters.'
+      error.value = t('auth.signup.invalidInput')
     } else {
-      error.value = 'Registration failed. Please try again.'
+      error.value = t('auth.signup.registrationFailed')
     }
   } finally {
     loading.value = false

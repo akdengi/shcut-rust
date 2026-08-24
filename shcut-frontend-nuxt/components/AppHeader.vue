@@ -21,7 +21,7 @@
           <button
             @click="toggleDark()"
             class="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-            title="Toggle dark mode"
+            :title="$t('navigation.toggleDarkMode')"
           >
             <svg v-if="isDark" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
@@ -68,7 +68,7 @@
                     class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
                     @click="showMenu = false"
                   >
-                    Profile Settings
+                    {{ $t('navigation.profileSettings') }}
                   </NuxtLink>
                   <NuxtLink
                     v-if="authStore.isAdmin"
@@ -76,7 +76,7 @@
                     class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
                     @click="showMenu = false"
                   >
-                    User Management
+                    {{ $t('navigation.userManagement') }}
                   </NuxtLink>
                   <NuxtLink
                     v-if="authStore.isAdmin"
@@ -84,7 +84,7 @@
                     class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
                     @click="showMenu = false"
                   >
-                    Workspace Settings
+                    {{ $t('navigation.workspaceSettings') }}
                   </NuxtLink>
                   <NuxtLink
                     v-if="authStore.isAdmin"
@@ -92,14 +92,14 @@
                     class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
                     @click="showMenu = false"
                   >
-                    Tag Management
+                    {{ $t('navigation.tagManagement') }}
                   </NuxtLink>
                   <hr class="my-1 border-gray-100 dark:border-gray-700" />
                   <button
                     @click="handleLogout"
                     class="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-50 dark:hover:bg-gray-700"
                   >
-                    Sign out
+                    {{ $t('navigation.signOut') }}
                   </button>
                 </div>
               </Transition>
@@ -111,13 +111,13 @@
               to="/auth/login"
               class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
             >
-              Log in
+              {{ $t('navigation.logIn') }}
             </NuxtLink>
             <NuxtLink
               to="/auth/signup"
               class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors"
             >
-              Sign up
+              {{ $t('navigation.signUp') }}
             </NuxtLink>
           </template>
         </div>
@@ -128,6 +128,8 @@
 
 <script setup lang="ts">
 import { useAuthStore } from '~/stores/auth'
+
+const { t } = useI18n()
 
 const authStore = useAuthStore()
 const { settings, fetchSettings } = useWorkspace()

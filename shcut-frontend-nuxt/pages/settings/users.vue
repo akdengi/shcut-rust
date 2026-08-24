@@ -2,11 +2,11 @@
   <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <div class="flex items-center justify-between mb-6">
       <div>
-        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">User Management</h1>
-        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Admin only</p>
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">{{ $t('settings.users.heading') }}</h1>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">{{ $t('settings.users.subtitle') }}</p>
       </div>
       <div class="flex items-center gap-2">
-        <button @click="navigateTo('/')" class="p-2 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Close">
+        <button @click="navigateTo('/')" class="p-2 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" :title="$t('common.close')">
           <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
           </svg>
@@ -18,7 +18,7 @@
           <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
           </svg>
-          New User
+          {{ $t('settings.users.newUser') }}
         </button>
       </div>
     </div>
@@ -35,16 +35,16 @@
           <thead class="bg-gray-50 dark:bg-gray-800/50">
             <tr>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                User
+                {{ $t('settings.users.table.user') }}
               </th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Role
+                {{ $t('settings.users.table.role') }}
               </th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Created
+                {{ $t('settings.users.table.created') }}
               </th>
               <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Actions
+                {{ $t('settings.users.table.actions') }}
               </th>
             </tr>
           </thead>
@@ -84,14 +84,14 @@
                     @click="openEdit(user)"
                     class="text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:underline"
                   >
-                    Edit
+                    {{ $t('settings.users.edit') }}
                   </button>
                   <button
                     v-if="user.id !== currentUserId"
                     @click="confirmDelete(user)"
                     class="text-sm font-medium text-red-600 dark:text-red-400 hover:underline"
                   >
-                    Delete
+                    {{ $t('settings.users.delete') }}
                   </button>
                 </div>
               </td>
@@ -116,7 +116,7 @@
           <div class="relative w-full max-w-lg bg-white dark:bg-gray-900 shadow-xl overflow-y-auto">
             <div class="p-6">
               <div class="flex items-center justify-between mb-6">
-                <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Edit User</h2>
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-white">{{ $t('settings.users.editUser') }}</h2>
                 <button @click="showEditForm = false" class="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800">
                   <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -126,7 +126,7 @@
 
               <form @submit.prevent="handleEditSave" class="space-y-4">
                 <div>
-                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nickname</label>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ $t('settings.users.nickname') }}</label>
                   <input
                     v-model="editForm.nickname"
                     type="text"
@@ -134,7 +134,7 @@
                   />
                 </div>
                 <div>
-                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ $t('settings.users.email') }}</label>
                   <input
                     v-model="editForm.email"
                     type="email"
@@ -142,23 +142,23 @@
                   />
                 </div>
                 <div v-if="editingUser && editingUser.role !== 'admin' && editingUser.id !== currentUserId">
-                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">New Password</label>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ $t('settings.users.newPassword') }}</label>
                   <input
                     v-model="editForm.newPassword"
                     type="password"
                     minlength="6"
                     class="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors"
-                    placeholder="Leave empty to keep current"
+                    :placeholder="$t('settings.users.leaveEmpty')"
                   />
                 </div>
                 <div v-if="editingUser && editingUser.role !== 'admin' && editingUser.id !== currentUserId">
-                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Role</label>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ $t('settings.users.role') }}</label>
                   <select
                     v-model="editForm.role"
                     class="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors"
                   >
-                    <option value="user">User - can create/edit shortcuts</option>
-                    <option value="view">View - can only view shortcuts</option>
+                    <option value="user">{{ $t('settings.users.optionUser') }}</option>
+                    <option value="view">{{ $t('settings.users.optionView') }}</option>
                   </select>
                 </div>
 
@@ -168,14 +168,14 @@
                     @click="showEditForm = false"
                     class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                   >
-                    Cancel
+                    {{ $t('common.cancel') }}
                   </button>
                   <button
                     type="submit"
                     :disabled="editSaving"
                     class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors"
                   >
-                    {{ editSaving ? 'Saving...' : 'Save' }}
+                    {{ editSaving ? $t('common.saving') : $t('settings.users.save') }}
                   </button>
                 </div>
               </form>
@@ -188,8 +188,8 @@
     <!-- Delete Confirmation -->
     <ConfirmDialog
       v-model="showDeleteConfirm"
-      title="Delete User"
-      :message="`Are you sure you want to delete user '${deletingUser?.nickname}' (${deletingUser?.email})?`"
+      :title="$t('settings.users.deleteTitle')"
+      :message="t('settings.users.deleteMessage', { nickname: deletingUser?.nickname, email: deletingUser?.email })"
       danger
       :loading="deleteLoading"
       @confirm="handleDelete"
@@ -209,30 +209,30 @@
         <div v-if="showCreateForm" class="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div class="absolute inset-0 bg-black/50" @click="showCreateForm = false" />
           <div class="relative bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full p-6">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Create User</h3>
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">{{ $t('settings.users.createUser') }}</h3>
             <form @submit.prevent="handleCreate" class="space-y-4">
               <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nickname</label>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ $t('settings.users.nickname') }}</label>
                 <input
                   v-model="createForm.nickname"
                   type="text"
                   required
                   class="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors"
-                  placeholder="John Doe"
+                  :placeholder="$t('settings.users.nicknamePlaceholder')"
                 />
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ $t('settings.users.email') }}</label>
                 <input
                   v-model="createForm.email"
                   type="email"
                   required
                   class="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors"
-                  placeholder="john@example.com"
+                  :placeholder="$t('settings.users.emailPlaceholder')"
                 />
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Password</label>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ $t('settings.users.password') }}</label>
                 <div class="relative">
                   <input
                     v-model="createForm.password"
@@ -240,7 +240,7 @@
                     required
                     minlength="6"
                     class="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2.5 pr-10 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors"
-                    placeholder="Min 6 characters"
+                    :placeholder="$t('settings.users.minChars')"
                   />
                   <button type="button" @click="showCreatePassword = !showCreatePassword" class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
                     <svg v-if="!showCreatePassword" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -254,7 +254,7 @@
                 </div>
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Confirm password</label>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ $t('settings.users.confirmPassword') }}</label>
                 <div class="relative">
                   <input
                     v-model="createForm.confirmPassword"
@@ -262,7 +262,7 @@
                     required
                     minlength="6"
                     class="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2.5 pr-10 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors"
-                    placeholder="Min 6 characters"
+                    :placeholder="$t('settings.users.minChars')"
                   />
                   <button type="button" @click="showCreateConfirmPassword = !showCreateConfirmPassword" class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
                     <svg v-if="!showCreateConfirmPassword" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -276,13 +276,13 @@
                 </div>
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Role</label>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ $t('settings.users.role') }}</label>
                 <select
                   v-model="createForm.role"
                   class="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2.5 text-sm text-gray-900 dark:text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors"
                 >
-                  <option value="user">User - can create/edit shortcuts</option>
-                  <option value="view">View - can only view shortcuts</option>
+                  <option value="user">{{ $t('settings.users.optionUser') }}</option>
+                  <option value="view">{{ $t('settings.users.optionView') }}</option>
                 </select>
               </div>
               <div class="flex items-center justify-end gap-3 pt-2">
@@ -291,14 +291,14 @@
                   @click="showCreateForm = false"
                   class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                 >
-                  Cancel
+                  {{ $t('common.cancel') }}
                 </button>
                 <button
                   type="submit"
                   :disabled="createSaving"
                   class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors"
                 >
-                  {{ createSaving ? 'Creating...' : 'Create' }}
+                  {{ createSaving ? $t('common.creating') : $t('settings.users.create') }}
                 </button>
               </div>
             </form>
@@ -320,6 +320,7 @@ definePageMeta({
   middleware: 'auth',
 })
 
+const { t } = useI18n()
 const api = useApi()
 const authStore = useAuthStore()
 const toast = useToast()
@@ -348,7 +349,7 @@ onMounted(async () => {
   try {
     users.value = await api.get<User[]>('/api/v1/users')
   } catch {
-    toast.error('Failed to load users')
+    toast.error(t('settings.users.usersLoadFailed'))
   } finally {
     loading.value = false
   }
@@ -378,13 +379,13 @@ const handleEditSave = async () => {
       await api.put(`/api/v1/users/${editingUser.value.id}/password`, {
         new_password: editForm.value.newPassword,
       })
-      toast.success('Password reset')
+      toast.success(t('settings.users.passwordReset'))
     }
 
     showEditForm.value = false
-    toast.success('User updated')
+    toast.success(t('settings.users.userUpdated'))
   } catch (e: any) {
-    toast.error(e?.data?.message || 'Failed to update user')
+    toast.error(e?.data?.message || t('settings.users.updateFailed'))
   } finally {
     editSaving.value = false
   }
@@ -397,7 +398,7 @@ const confirmDelete = (user: User) => {
 
 const handleCreate = async () => {
   if (createForm.value.password !== createForm.value.confirmPassword) {
-    toast.error('Passwords do not match')
+    toast.error(t('settings.users.passwordsNoMatch'))
     return
   }
   createSaving.value = true
@@ -411,12 +412,12 @@ const handleCreate = async () => {
     users.value.unshift(newUser)
     showCreateForm.value = false
     createForm.value = { nickname: '', email: '', password: '', confirmPassword: '', role: 'view' }
-    toast.success('User created')
+    toast.success(t('settings.users.userCreated'))
   } catch (e: any) {
     if (e?.statusCode === 409) {
-      toast.error('User with this email already exists')
+      toast.error(t('settings.users.emailExists'))
     } else {
-      toast.error('Failed to create user')
+      toast.error(t('settings.users.createFailed'))
     }
   } finally {
     createSaving.value = false
@@ -429,9 +430,9 @@ const handleDelete = async () => {
   try {
     await api.del(`/api/v1/users/${deletingUser.value.id}`)
     users.value = users.value.filter(u => u.id !== deletingUser.value!.id)
-    toast.success('User deleted')
+    toast.success(t('settings.users.userDeleted'))
   } catch (e: any) {
-    toast.error(e?.data?.message || 'Failed to delete user')
+    toast.error(e?.data?.message || t('settings.users.deleteFailed'))
   }
   deleteLoading.value = false
   showDeleteConfirm.value = false

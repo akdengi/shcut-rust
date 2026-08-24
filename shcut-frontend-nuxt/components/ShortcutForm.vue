@@ -3,7 +3,7 @@
     <!-- Name -->
     <div>
       <label for="shortcut-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-        Short name <span class="text-red-500">*</span>
+        {{ $t('shortcutForm.shortName') }} <span class="text-red-500">*</span>
       </label>
       <div class="flex items-center">
         <span class="text-sm text-gray-500 dark:text-gray-400 mr-1">/s/</span>
@@ -12,7 +12,7 @@
           v-model="form.name"
           type="text"
           required
-          placeholder="my-link"
+          :placeholder="$t('shortcutForm.shortNamePlaceholder')"
           class="flex-1 block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors"
         />
       </div>
@@ -22,14 +22,14 @@
     <!-- Target URL -->
     <div>
       <label for="shortcut-link" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-        Target URL <span class="text-red-500">*</span>
+        {{ $t('shortcutForm.targetUrl') }} <span class="text-red-500">*</span>
       </label>
       <input
         id="shortcut-link"
         v-model="form.link"
         type="url"
         required
-        placeholder="https://example.com/very/long/url"
+        :placeholder="$t('shortcutForm.targetUrlPlaceholder')"
         class="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors"
       />
     </div>
@@ -37,13 +37,13 @@
     <!-- Title -->
     <div>
       <label for="shortcut-title" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-        Title
+        {{ $t('shortcutForm.title') }}
       </label>
       <input
         id="shortcut-title"
         v-model="form.title"
         type="text"
-        placeholder="Optional display title"
+        :placeholder="$t('shortcutForm.titlePlaceholder')"
         class="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors"
       />
     </div>
@@ -51,20 +51,20 @@
     <!-- Description -->
     <div>
       <label for="shortcut-desc" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-        Description
+        {{ $t('shortcutForm.description') }}
       </label>
       <textarea
         id="shortcut-desc"
         v-model="form.description"
         rows="2"
-        placeholder="Optional description"
+        :placeholder="$t('shortcutForm.descriptionPlaceholder')"
         class="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors resize-none"
       />
     </div>
 
     <!-- Visibility -->
     <div>
-      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Visibility</label>
+      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ $t('shortcutForm.visibility') }}</label>
       <div class="flex gap-3">
         <label
           :class="[
@@ -78,7 +78,7 @@
           <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
           </svg>
-          <span class="text-sm font-medium">Workspace</span>
+          <span class="text-sm font-medium">{{ $t('shortcutForm.workspace') }}</span>
         </label>
         <label
           :class="[
@@ -92,7 +92,7 @@
           <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
-          <span class="text-sm font-medium">Public</span>
+          <span class="text-sm font-medium">{{ $t('shortcutForm.public') }}</span>
         </label>
       </div>
     </div>
@@ -100,7 +100,7 @@
     <!-- Tags -->
     <div>
       <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-        Tags
+        {{ $t('shortcutForm.tags') }}
       </label>
       <!-- Tag cloud -->
       <div class="flex flex-wrap gap-2">
@@ -122,7 +122,7 @@
           {{ tag }}
         </button>
         <span v-if="!existingTags.length" class="text-sm text-gray-500 dark:text-gray-400">
-          No tags available. Create tags in Settings → Tag Management.
+          {{ $t('shortcutForm.noTags') }}
         </span>
       </div>
     </div>
@@ -130,39 +130,39 @@
     <!-- OG fields (collapsible) -->
     <details class="group">
       <summary class="text-sm font-medium text-gray-500 dark:text-gray-400 cursor-pointer hover:text-gray-700 dark:hover:text-gray-300 select-none">
-        Open Graph / Social Preview
+        {{ $t('shortcutForm.ogSection') }}
         <svg class="w-4 h-4 inline-block ml-1 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
         </svg>
       </summary>
       <div class="mt-3 space-y-4">
         <div>
-          <label for="og-title" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">OG Title</label>
-          <input id="og-title" v-model="form.og_title" type="text" placeholder="Custom social preview title"
+          <label for="og-title" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ $t('shortcutForm.ogTitle') }}</label>
+          <input id="og-title" v-model="form.og_title" type="text" :placeholder="$t('shortcutForm.ogTitlePlaceholder')"
             class="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors" />
         </div>
         <div>
-          <label for="og-desc" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">OG Description</label>
-          <textarea id="og-desc" v-model="form.og_description" rows="2" placeholder="Custom social preview description"
+          <label for="og-desc" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ $t('shortcutForm.ogDescription') }}</label>
+          <textarea id="og-desc" v-model="form.og_description" rows="2" :placeholder="$t('shortcutForm.ogDescriptionPlaceholder')"
             class="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors resize-none" />
         </div>
         <div>
-          <label for="og-image" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">OG Image</label>
+          <label for="og-image" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ $t('shortcutForm.ogImage') }}</label>
           <div class="flex gap-2 mb-2">
-            <button type="button" @click="ogImageMode = 'url'" :class="['px-3 py-1.5 text-xs font-medium rounded-lg transition-colors', ogImageMode === 'url' ? 'bg-indigo-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600']">URL</button>
-            <button type="button" @click="ogImageMode = 'upload'" :class="['px-3 py-1.5 text-xs font-medium rounded-lg transition-colors', ogImageMode === 'upload' ? 'bg-indigo-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600']">Upload File</button>
+            <button type="button" @click="ogImageMode = 'url'" :class="['px-3 py-1.5 text-xs font-medium rounded-lg transition-colors', ogImageMode === 'url' ? 'bg-indigo-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600']">{{ $t('shortcutForm.ogImageUrl') }}</button>
+            <button type="button" @click="ogImageMode = 'upload'" :class="['px-3 py-1.5 text-xs font-medium rounded-lg transition-colors', ogImageMode === 'upload' ? 'bg-indigo-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600']">{{ $t('shortcutForm.ogUploadFile') }}</button>
           </div>
           <div v-if="ogImageMode === 'url'">
-            <input id="og-image" v-model="form.og_image" type="text" placeholder="https://example.com/image.png"
+            <input id="og-image" v-model="form.og_image" type="text" :placeholder="$t('shortcutForm.ogImageUrlPlaceholder')"
               class="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors" />
           </div>
           <div v-else>
             <div v-if="form.og_image && form.og_image.startsWith('/uploads/')" class="mb-2">
-              <img :src="form.og_image" alt="OG Image preview" class="h-20 rounded-lg object-cover border border-gray-200 dark:border-gray-700" />
+              <img :src="form.og_image" :alt="$t('shortcutForm.ogImage')" class="h-20 rounded-lg object-cover border border-gray-200 dark:border-gray-700" />
             </div>
             <input type="file" accept="image/png,image/jpeg,image/gif,image/webp" @change="handleOgImageUpload" class="block w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-indigo-50 dark:file:bg-indigo-900/30 file:text-indigo-700 dark:file:text-indigo-300 hover:file:bg-indigo-100 dark:hover:file:bg-indigo-900/50" />
-            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">PNG, JPG, GIF or WebP. Max 2 MB.</p>
-            <p v-if="ogImageUploading" class="mt-1 text-xs text-indigo-600 dark:text-indigo-400">Uploading...</p>
+            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ $t('shortcutForm.ogImageFormats') }}</p>
+            <p v-if="ogImageUploading" class="mt-1 text-xs text-indigo-600 dark:text-indigo-400">{{ $t('shortcutForm.ogImageUploading') }}</p>
           </div>
         </div>
       </div>
@@ -175,14 +175,14 @@
         @click="$emit('cancel')"
         class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
       >
-        Cancel
+        {{ $t('common.cancel') }}
       </button>
       <button
         type="submit"
         :disabled="submitting"
         class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
       >
-        {{ submitting ? 'Saving...' : (editMode ? 'Update' : 'Create') }}
+        {{ submitting ? $t('common.saving') : (editMode ? $t('shortcutForm.update') : $t('shortcutForm.create')) }}
       </button>
     </div>
   </form>
@@ -191,6 +191,8 @@
 <script setup lang="ts">
 import { ref, watch, computed, onMounted } from '#imports'
 import type { ShortcutWithTags, ShortcutCreatePayload } from '~/types/api'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   shortcut?: ShortcutWithTags | null
@@ -236,7 +238,7 @@ const handleOgImageUpload = async (event: Event) => {
   if (!file) return
 
   if (file.size > 2 * 1024 * 1024) {
-    alert('File size must be less than 2 MB')
+    alert(t('shortcutForm.fileTooLarge'))
     input.value = ''
     return
   }
@@ -252,7 +254,7 @@ const handleOgImageUpload = async (event: Event) => {
     })
     form.value.og_image = data.url
   } catch (e) {
-    alert('Failed to upload image')
+    alert(t('shortcutForm.uploadFailed'))
   } finally {
     ogImageUploading.value = false
     input.value = ''

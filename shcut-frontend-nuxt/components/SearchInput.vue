@@ -9,7 +9,7 @@
       :value="modelValue"
       @input="handleInput"
       type="text"
-      :placeholder="placeholder"
+      :placeholder="resolvedPlaceholder"
       class="block w-full pl-10 pr-4 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors"
     />
     <button
@@ -27,6 +27,8 @@
 <script setup lang="ts">
 import { ref } from '#imports'
 
+const { t } = useI18n()
+
 const props = withDefaults(
   defineProps<{
     modelValue: string
@@ -34,10 +36,12 @@ const props = withDefaults(
     debounceMs?: number
   }>(),
   {
-    placeholder: 'Search...',
+    placeholder: undefined,
     debounceMs: 300,
   }
 )
+
+const resolvedPlaceholder = computed(() => props.placeholder ?? t('common.search'))
 
 const emit = defineEmits<{
   'update:modelValue': [value: string]

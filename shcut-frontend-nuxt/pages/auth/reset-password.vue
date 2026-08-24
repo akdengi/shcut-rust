@@ -10,11 +10,11 @@
 
       <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-8">
         <template v-if="!success">
-          <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">Set new password</h2>
+          <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">{{ $t('auth.resetPassword.heading') }}</h2>
 
           <form @submit.prevent="handleReset" class="space-y-4">
             <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">New Password</label>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ $t('auth.resetPassword.newPassword') }}</label>
               <input
                 v-model="form.new_password"
                 type="password"
@@ -22,11 +22,11 @@
                 minlength="6"
                 autocomplete="new-password"
                 class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                placeholder="Min 6 characters"
+                :placeholder="$t('auth.resetPassword.minChars')"
               />
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Confirm Password</label>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ $t('auth.resetPassword.confirmPassword') }}</label>
               <input
                 v-model="form.confirm_password"
                 type="password"
@@ -34,7 +34,7 @@
                 minlength="6"
                 autocomplete="new-password"
                 class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                placeholder="Min 6 characters"
+                :placeholder="$t('auth.resetPassword.minChars')"
               />
             </div>
 
@@ -47,7 +47,7 @@
               :disabled="loading"
               class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
             >
-              {{ loading ? 'Resetting...' : 'Reset password' }}
+              {{ loading ? $t('auth.resetPassword.resetting') : $t('auth.resetPassword.resetPassword') }}
             </button>
           </form>
         </template>
@@ -58,12 +58,12 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Password has been reset successfully.</p>
-          <NuxtLink to="/auth/login" class="text-blue-600 hover:text-blue-500 font-medium text-sm">Sign in with new password</NuxtLink>
+          <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">{{ $t('auth.resetPassword.successMessage') }}</p>
+          <NuxtLink to="/auth/login" class="text-blue-600 hover:text-blue-500 font-medium text-sm">{{ $t('auth.resetPassword.signInWithNewPassword') }}</NuxtLink>
         </div>
 
         <div class="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
-          <NuxtLink to="/auth/login" class="text-blue-600 hover:text-blue-500 font-medium">Back to sign in</NuxtLink>
+          <NuxtLink to="/auth/login" class="text-blue-600 hover:text-blue-500 font-medium">{{ $t('auth.resetPassword.backToSignIn') }}</NuxtLink>
         </div>
       </div>
     </div>
@@ -73,6 +73,7 @@
 <script setup lang="ts">
 definePageMeta({ layout: false })
 
+const { t } = useI18n()
 const route = useRoute()
 const { settings, fetchSettings } = useWorkspace()
 
@@ -87,11 +88,11 @@ const success = ref(false)
 
 const handleReset = async () => {
   if (form.new_password !== form.confirm_password) {
-    error.value = 'Passwords do not match'
+    error.value = t('auth.resetPassword.passwordsNoMatch')
     return
   }
   if (!token.value) {
-    error.value = 'Invalid or missing reset token'
+    error.value = t('auth.resetPassword.missingToken')
     return
   }
   loading.value = true
@@ -104,9 +105,9 @@ const handleReset = async () => {
     success.value = true
   } catch (e: any) {
     if (e?.statusCode === 400) {
-      error.value = 'Invalid or expired reset token'
+      error.value = t('auth.resetPassword.invalidOrExpiredToken')
     } else {
-      error.value = 'Something went wrong. Please try again.'
+      error.value = t('auth.resetPassword.somethingWentWrong')
     }
   } finally {
     loading.value = false

@@ -6,6 +6,7 @@ export default defineNuxtConfig({
     '@nuxtjs/tailwindcss',
     '@nuxtjs/color-mode',
     '@pinia/nuxt',
+    '@nuxtjs/i18n',
   ],
 
   colorMode: {
@@ -14,6 +15,22 @@ export default defineNuxtConfig({
 
   tailwindcss: {
     configPath: 'tailwind.config.ts',
+  },
+
+  i18n: {
+    locales: [
+      { code: 'en', name: 'English', file: 'en.json' },
+      { code: 'ru', name: 'Русский', file: 'ru.json' },
+    ],
+    defaultLocale: 'en',
+    lazy: true,
+    langDir: '../locales',
+    strategy: 'no_prefix',
+    detectBrowserLanguage: {
+      useCookie: true,
+      cookieKey: 'shcut_i18n',
+      redirectOn: 'root',
+    },
   },
 
   runtimeConfig: {

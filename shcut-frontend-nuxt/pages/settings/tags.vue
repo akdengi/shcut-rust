@@ -2,11 +2,11 @@
   <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <div class="flex items-center justify-between mb-6">
       <div>
-        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Tag Management</h1>
-        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Manage tags for shortcuts</p>
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">{{ $t('settings.tags.heading') }}</h1>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">{{ $t('settings.tags.subtitle') }}</p>
       </div>
       <div class="flex items-center gap-2">
-        <button @click="navigateTo('/')" class="p-2 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Close">
+        <button @click="navigateTo('/')" class="p-2 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" :title="$t('common.close')">
           <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
           </svg>
@@ -18,7 +18,7 @@
           <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
           </svg>
-          New Tag
+          {{ $t('settings.tags.newTag') }}
         </button>
       </div>
     </div>
@@ -37,14 +37,14 @@
               {{ tag.name }}
             </span>
             <span class="text-xs text-gray-500 dark:text-gray-400">
-              {{ tag.shortcut_count || 0 }} shortcuts
+              {{ $t('settings.tags.shortcutCount', { count: tag.shortcut_count || 0 }) }}
             </span>
           </div>
           <div class="flex items-center gap-2">
             <button
               @click="startRename(tag)"
               class="p-1.5 rounded-lg text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-              title="Rename"
+              :title="$t('settings.tags.rename')"
             >
               <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -53,7 +53,7 @@
             <button
               @click="confirmDelete(tag)"
               class="p-1.5 rounded-lg text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-              title="Delete"
+              :title="$t('settings.tags.delete')"
             >
               <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -62,7 +62,7 @@
           </div>
         </div>
         <div v-if="!tags.length" class="px-5 py-8 text-center text-gray-500 dark:text-gray-400">
-          No tags yet. Create your first tag.
+          {{ $t('settings.tags.emptyState') }}
         </div>
       </div>
     </div>
@@ -73,21 +73,21 @@
         <div v-if="showCreateForm" class="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div class="absolute inset-0 bg-black/50" @click="showCreateForm = false" />
           <div class="relative bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full p-6">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Create Tag</h3>
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">{{ $t('settings.tags.createTag') }}</h3>
             <form @submit.prevent="handleCreate">
               <input
                 v-model="newTagName"
                 type="text"
-                placeholder="Tag name"
+                :placeholder="$t('settings.tags.tagName')"
                 autofocus
                 class="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors"
               />
               <div class="flex items-center justify-end gap-3 mt-4">
                 <button type="button" @click="showCreateForm = false" :disabled="creating" class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50">
-                  Cancel
+                  {{ $t('common.cancel') }}
                 </button>
                 <button type="submit" :disabled="!newTagName.trim() || creating" class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors">
-                  {{ creating ? 'Creating...' : 'Create' }}
+                  {{ creating ? $t('settings.tags.creating') : $t('settings.tags.createTag') }}
                 </button>
               </div>
             </form>
@@ -102,21 +102,21 @@
         <div v-if="renamingTag" class="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div class="absolute inset-0 bg-black/50" @click="renamingTag = null" />
           <div class="relative bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full p-6">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Rename Tag</h3>
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">{{ $t('settings.tags.renameTag') }}</h3>
             <form @submit.prevent="handleRename">
               <input
                 v-model="renameName"
                 type="text"
-                placeholder="New tag name"
+                :placeholder="$t('settings.tags.newTagName')"
                 autofocus
                 class="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors"
               />
               <div class="flex items-center justify-end gap-3 mt-4">
                 <button type="button" @click="renamingTag = null" :disabled="renaming" class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50">
-                  Cancel
+                  {{ $t('common.cancel') }}
                 </button>
                 <button type="submit" :disabled="!renameName.trim() || renaming" class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors">
-                  {{ renaming ? 'Renaming...' : 'Rename' }}
+                  {{ renaming ? $t('settings.tags.renaming') : $t('settings.tags.rename') }}
                 </button>
               </div>
             </form>
@@ -128,9 +128,9 @@
     <!-- Delete Confirmation -->
     <ConfirmDialog
       v-model="showDeleteConfirm"
-      title="Delete Tag"
-      :message="`Are you sure you want to delete tag '${deletingTag?.name}'? It will be removed from all shortcuts.`"
-      confirm-text="Delete"
+      :title="$t('settings.tags.deleteTitle')"
+      :message="t('settings.tags.deleteMessage', { name: deletingTag?.name })"
+      :confirm-text="$t('settings.tags.delete')"
       :danger="true"
       :loading="deleting"
       @confirm="handleDelete"
@@ -150,6 +150,7 @@ interface TagWithCount {
 
 definePageMeta({ middleware: 'auth' })
 
+const { t } = useI18n()
 const authStore = useAuthStore()
 const toast = useToast()
 
@@ -176,7 +177,7 @@ const loadTags = async () => {
     })
     tags.value = data
   } catch {
-    toast.error('Failed to load tags')
+    toast.error(t('settings.tags.tagsLoadFailed'))
   } finally {
     loading.value = false
   }
@@ -198,12 +199,12 @@ const handleCreate = async () => {
     tags.value.push(tag)
     newTagName.value = ''
     showCreateForm.value = false
-    toast.success('Tag created')
+    toast.success(t('settings.tags.tagCreated'))
   } catch (e: any) {
     if (e?.statusCode === 409) {
-      toast.error('Tag already exists')
+      toast.error(t('settings.tags.tagAlreadyExists'))
     } else {
-      toast.error('Failed to create tag')
+      toast.error(t('settings.tags.createFailed'))
     }
   } finally {
     creating.value = false
@@ -233,12 +234,12 @@ const handleRename = async () => {
     const idx = tags.value.findIndex(t => t.id === updated.id)
     if (idx !== -1) tags.value[idx] = updated
     renamingTag.value = null
-    toast.success('Tag renamed')
+    toast.success(t('settings.tags.tagRenamed'))
   } catch (e: any) {
     if (e?.statusCode === 409) {
-      toast.error('Tag name already exists')
+      toast.error(t('settings.tags.nameAlreadyExists'))
     } else {
-      toast.error('Failed to rename tag')
+      toast.error(t('settings.tags.renameFailed'))
     }
   } finally {
     renaming.value = false
@@ -259,9 +260,9 @@ const handleDelete = async () => {
       headers: headers.value,
     })
     tags.value = tags.value.filter(t => t.id !== deletingTag.value!.id)
-    toast.success('Tag deleted')
+    toast.success(t('settings.tags.tagDeleted'))
   } catch {
-    toast.error('Failed to delete tag')
+    toast.error(t('settings.tags.deleteFailed'))
   } finally {
     deleting.value = false
     showDeleteConfirm.value = false

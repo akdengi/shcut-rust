@@ -46,7 +46,7 @@
                 :disabled="loading"
                 class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50"
               >
-                Cancel
+                {{ $t('common.cancel') }}
               </button>
               <button
                 @click="$emit('confirm')"
@@ -56,7 +56,7 @@
                   danger ? 'bg-red-600 hover:bg-red-700' : 'bg-indigo-600 hover:bg-indigo-700'
                 ]"
               >
-                {{ loading ? 'Deleting...' : props.confirmText }}
+                {{ loading ? $t('common.deleting') : resolvedConfirmText }}
               </button>
             </div>
           </div>
@@ -67,6 +67,8 @@
 </template>
 
 <script setup lang="ts">
+const { t } = useI18n()
+
 const props = withDefaults(defineProps<{
   modelValue: boolean
   title: string
@@ -75,8 +77,10 @@ const props = withDefaults(defineProps<{
   danger?: boolean
   loading?: boolean
 }>(), {
-  confirmText: 'Delete',
+  confirmText: undefined,
 })
+
+const resolvedConfirmText = computed(() => props.confirmText ?? t('common.delete'))
 
 defineEmits<{
   'update:modelValue': [value: boolean]
