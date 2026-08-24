@@ -129,3 +129,30 @@ export interface ShortcutListParams {
   search?: string
   visibility?: 'workspace' | 'public'
 }
+
+// ─── API Keys ───────────────────────────────────────────
+
+export interface ApiKey {
+  id: number
+  name: string
+  key_prefix: string
+  created_ts: number
+  last_used_ts: number | null
+  expires_at: number | null
+  is_active: boolean
+}
+
+export interface ApiKeyCreatePayload {
+  name: string
+  user_id?: number
+  expires_in_days?: number | null
+}
+
+export interface ApiKeyCreateResponse {
+  id: number
+  name: string
+  key: string
+  key_prefix: string
+  created_ts: number
+  expires_at: number | null
+}
