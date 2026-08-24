@@ -204,7 +204,7 @@ pub struct ViewsByDate {
 
 // ===== API Keys =====
 
-#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+#[derive(Debug, Clone, Deserialize, sqlx::FromRow)]
 pub struct ApiKey {
     pub id: i64,
     pub user_id: i64,
