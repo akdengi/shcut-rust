@@ -231,24 +231,6 @@
       "renameFailed": "Failed to rename tag",
       "deleteFailed": "Failed to delete tag"
     },
-    "workspace": {
-      "heading": "Workspace Settings",
-      "companyName": "Company Name",
-      "logo": "Logo",
-      "preview": "Preview",
-      "companyNamePlaceholder": "My Company",
-      "currentLogo": "Current logo",
-      "chooseFile": "Choose file",
-      "fileFormats": "PNG, JPG, GIF, SVG, WebP (max 2MB)",
-      "uploading": "Uploading...",
-      "saving": "Saving...",
-      "saveSettings": "Save Settings",
-      "settingsSaved": "Settings saved successfully",
-      "logoUploaded": "Logo uploaded",
-      "settingsSavedToast": "Settings saved",
-      "uploadFailed": "Upload failed. Max size is 2MB."
-    },
-    "language": "Language",
     "apiKeys": {
       "heading": "API Keys",
       "subtitle": "Manage API keys for programmatic access",
@@ -269,6 +251,8 @@
       "createKey": "Create API Key",
       "keyName": "Key name",
       "keyNamePlaceholder": "My Integration",
+      "forUser": "For user",
+      "myself": "Myself",
       "expiresInDays": "Expires in (days)",
       "expiresInDaysPlaceholder": "Optional, e.g. 90",
       "creating": "Creating...",
@@ -285,7 +269,25 @@
       "createFailed": "Failed to create API key",
       "deleteFailed": "Failed to revoke API key",
       "toggleFailed": "Failed to toggle API key"
-    }
+    },
+    "workspace": {
+      "heading": "Workspace Settings",
+      "companyName": "Company Name",
+      "logo": "Logo",
+      "preview": "Preview",
+      "companyNamePlaceholder": "My Company",
+      "currentLogo": "Current logo",
+      "chooseFile": "Choose file",
+      "fileFormats": "PNG, JPG, GIF, SVG, WebP (max 2MB)",
+      "uploading": "Uploading...",
+      "saving": "Saving...",
+      "saveSettings": "Save Settings",
+      "settingsSaved": "Settings saved successfully",
+      "logoUploaded": "Logo uploaded",
+      "settingsSavedToast": "Settings saved",
+      "uploadFailed": "Upload failed. Max size is 2MB."
+    },
+    "language": "Language"
   },
   "shortcutForm": {
     "shortName": "Short name",

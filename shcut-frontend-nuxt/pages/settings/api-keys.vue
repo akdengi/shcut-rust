@@ -220,6 +220,18 @@
                   :placeholder="$t('settings.apiKeys.keyNamePlaceholder')"
                 />
               </div>
+              <div v-if="authStore.isAdmin">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ $t('settings.apiKeys.forUser') }}</label>
+                <select
+                  v-model="createForm.user_id"
+                  class="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2.5 text-sm text-gray-900 dark:text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors"
+                >
+                  <option :value="null">{{ $t('settings.apiKeys.myself') }}</option>
+                  <option v-for="u in users" :key="u.id" :value="u.id">
+                    {{ u.nickname }} ({{ u.email }})
+                  </option>
+                </select>
+              </div>
               <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ $t('settings.apiKeys.expiresInDays') }}</label>
                 <input
@@ -257,8 +269,9 @@
 <script setup lang="ts">
 import { ref, onMounted } from '#imports'
 import { useApi } from '~/composables/useApi'
+import { useAuthStore } from '~/stores/auth'
 import { useToast } from '~/composables/useToast'
-import type { ApiKey, ApiKeyCreateResponse } from '~/types/api'
+import type { ApiKey, ApiKeyCreateResponse, User } from '~/types/api'
 
 definePageMeta({
   middleware: 'auth',
@@ -266,12 +279,14 @@ definePageMeta({
 
 const { t } = useI18n()
 const api = useApi()
+const authStore = useAuthStore()
 const toast = useToast()
 
 const loading = ref(true)
 const keys = ref<ApiKey[]>([])
+const users = ref<User[]>([])
 const showCreateForm = ref(false)
-const createForm = ref({ name: '', expires_in_days: null as number | null })
+const createForm = ref({ name: '', expires_in_days: null as number | null, user_id: null as number | null })
 const createSaving = ref(false)
 const createdKey = ref<ApiKeyCreateResponse | null>(null)
 const deletingKey = ref<ApiKey | null>(null)
@@ -284,6 +299,9 @@ const showDeleteConfirm = computed({
 onMounted(async () => {
   try {
     keys.value = await api.get<ApiKey[]>('/api/v1/api-keys')
+    if (authStore.isAdmin) {
+      users.value = await api.get<User[]>('/api/v1/users')
+    }
   } catch {
     toast.error(t('settings.apiKeys.keysLoadFailed'))
   } finally {
@@ -298,6 +316,9 @@ const handleCreate = async () => {
     if (createForm.value.expires_in_days) {
       body.expires_in_days = createForm.value.expires_in_days
     }
+    if (authStore.isAdmin && createForm.value.user_id) {
+      body.user_id = createForm.value.user_id
+    }
     const response = await api.post<ApiKeyCreateResponse>('/api/v1/api-keys', body)
     createdKey.value = response
     keys.value.unshift({
@@ -310,7 +331,7 @@ const handleCreate = async () => {
       is_active: true,
     })
     showCreateForm.value = false
-    createForm.value = { name: '', expires_in_days: null }
+    createForm.value = { name: '', expires_in_days: null, user_id: null }
     toast.success(t('settings.apiKeys.keyCreated'))
   } catch (e: any) {
     toast.error(e?.data?.message || t('settings.apiKeys.createFailed'))

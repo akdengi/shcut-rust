@@ -269,6 +269,8 @@
       "createKey": "Создать API-ключ",
       "keyName": "Название ключа",
       "keyNamePlaceholder": "Моя интеграция",
+      "forUser": "Для пользователя",
+      "myself": "Для себя",
       "expiresInDays": "Срок действия (дней)",
       "expiresInDaysPlaceholder": "Необязательно, напр. 90",
       "creating": "Создание...",
