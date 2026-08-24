@@ -63,7 +63,7 @@
         <div>
           <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ $t('settings.language') }}</label>
           <select
-            :value="locale"
+            :value="currentLocale"
             @change="onLocaleChange"
             class="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-3 py-2.5 text-sm text-gray-900 dark:text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors"
           >
@@ -154,7 +154,8 @@ definePageMeta({
   middleware: 'auth',
 })
 
-const { t, locale } = useI18n()
+const { t } = useI18n()
+const nuxtApp = useNuxtApp()
 const authStore = useAuthStore()
 const api = useApi()
 const toast = useToast()
@@ -167,8 +168,18 @@ const success = ref('')
 const passwordForm = ref({ current_password: '', new_password: '', confirm_password: '' })
 const passwordSaving = ref(false)
 
+const currentLocale = computed({
+  get: () => nuxtApp.$i18n.locale.value,
+  set: (val: string) => {
+    nuxtApp.$i18n.locale.value = val
+  }
+})
+
 const onLocaleChange = (event: Event) => {
-  locale.value = (event.target as HTMLSelectElement).value
+  const newLocale = (event.target as HTMLSelectElement).value
+  nuxtApp.$i18n.locale.value = newLocale
+  const cookie = useCookie('shcut_i18n', { maxAge: 365 * 24 * 60 * 60 })
+  cookie.value = newLocale
 }
 
 onMounted(async () => {
