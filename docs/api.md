@@ -6,11 +6,18 @@ Base URL: `http://your-server:5231`
 
 Protected endpoints require `Authorization: Bearer <token>` header.
 
+Two authentication methods are supported:
+
+- **JWT** — obtained via `/api/v1/auth/login` or `/api/v1/auth/register`. Expires in 7 days.
+- **API Keys** — generated via `/api/v1/api-keys`. Format: `shcut_` + 96 hex characters. Expires optionally. Keys are returned **only on creation** — store them securely.
+
+Both are used the same way: `Authorization: Bearer <token-or-api-key>`
+
 ## Roles
 
-- **admin** — full access, only one (seeded from .env)
-- **user** — create/edit own shortcuts, view everything
-- **view** — read-only access
+- **admin** — full access (create/edit/delete all shortcuts, manage users, manage settings, manage API keys)
+- **user** — create shortcuts, edit own shortcuts, manage own API keys
+- **view** — read-only access (cannot create/edit anything)
 
 New users default to `view` role.
 
@@ -40,7 +47,7 @@ New users default to `view` role.
 | PUT | `/api/v1/shortcuts/:id` | Yes | admin, user (own) | Update |
 | DELETE | `/api/v1/shortcuts/:id` | Yes | admin | Delete |
 | GET | `/api/v1/shortcuts/by-name/:name` | No | — | Get by name |
-| GET | `/api/v1/shortcuts/:id/analytics` | Yes | any | Analytics + activity log |
+| GET | `/api/v1/shortcuts/:id/analytics` | Yes | admin, user (own) | Analytics + activity log |
 | DELETE | `/api/v1/shortcuts/:id/analytics` | Yes | admin | Reset analytics for this shortcut |
 | GET | `/s/:name` | No | — | Redirect (records analytics) |
 
@@ -59,9 +66,9 @@ New users default to `view` role.
 | Method | Endpoint | Auth | Role | Description |
 |--------|----------|------|------|-------------|
 | GET | `/api/v1/tags` | No | — | List all tags with shortcut count |
-| POST | `/api/v1/tags` | Yes | any | Create tag |
-| PUT | `/api/v1/tags/:id` | Yes | any | Rename tag |
-| DELETE | `/api/v1/tags/:id` | Yes | any | Delete tag (removes from shortcuts) |
+| POST | `/api/v1/tags` | Yes | admin, user | Create tag |
+| PUT | `/api/v1/tags/:id` | Yes | admin, user | Rename tag |
+| DELETE | `/api/v1/tags/:id` | Yes | admin | Delete tag (removes from shortcuts) |
 | GET | `/api/v1/tags/:name/shortcuts` | No | — | Get shortcuts by tag |
 
 ---
@@ -101,6 +108,60 @@ New users default to `view` role.
 | PUT | `/api/v1/users/:id/password` | Yes | admin | Reset user password (not admin) |
 
 **Update fields:** `nickname`, `email`, `role` (admin only, cannot assign admin)
+
+---
+
+## API Keys
+
+API keys provide an alternative to JWT for programmatic access. Use `Authorization: Bearer <api-key>` header — same as JWT.
+
+| Method | Endpoint | Auth | Role | Description |
+|--------|----------|------|------|-------------|
+| GET | `/api/v1/api-keys` | Yes | admin (all), user/view (own) | List API keys |
+| POST | `/api/v1/api-keys` | Yes | admin, user | Create API key |
+| PUT | `/api/v1/api-keys/:id` | Yes | admin (any), user/view (own) | Toggle key active/inactive |
+| DELETE | `/api/v1/api-keys/:id` | Yes | admin (any), user/view (own) | Revoke (delete) API key |
+
+**Create request body:**
+```json
+{
+  "name": "My Integration",
+  "user_id": 2,           // optional, admin only — create key for another user
+  "expires_in_days": 90   // optional — key expires after N days
+}
+```
+
+**Create response** (key returned ONLY once):
+```json
+{
+  "id": 1,
+  "name": "My Integration",
+  "key": "shcut_a1b2c3d4e5f6...",  // STORE THIS — won't be shown again
+  "key_prefix": "shcut_a1b2c3",
+  "created_ts": 1700000000,
+  "expires_at": 1707776000
+}
+```
+
+**List response** (key never shown, only prefix):
+```json
+[
+  {
+    "id": 1,
+    "name": "My Integration",
+    "key_prefix": "shcut_a1b2c3",
+    "created_ts": 1700000000,
+    "last_used_ts": 1700100000,
+    "expires_at": 1707776000,
+    "is_active": true
+  }
+]
+```
+
+**Usage example:**
+```bash
+curl -H "Authorization: Bearer shcut_a1b2c3d4e5f6..." http://your-server:5231/api/v1/shortcuts
+```
 
 ---
 

@@ -9,6 +9,7 @@ Self-hosted URL shortener built with Rust and Nuxt 3.
 - **Analytics** — views, devices, browsers, OS, countries, referrers, UTM, activity log
 - **Workspace settings** — company name, logo upload
 - **Roles** — admin, user (create/edit), view (read-only)
+- **API Keys** — programmatic access with key-based auth (admin manages keys)
 - **JWT auth** — secure authentication with admin seeding from .env
 - **Password management** — self-service change, admin reset, forgot password via email
 - **i18n** — English and Russian localization, language selector in settings
@@ -41,11 +42,11 @@ chmod +x deploy.sh
 
 ## Roles
 
-| Role | Create/Edit | Delete | Settings | View |
-|------|-------------|--------|----------|------|
-| admin | ✓ | ✓ | ✓ | ✓ |
-| user | ✓ (own) | ✗ | ✗ | ✓ |
-| view | ✗ | ✗ | ✗ | ✓ |
+| Role | Shortcuts | Tags | Settings | Analytics | API Keys | Users |
+|------|-----------|------|----------|-----------|----------|-------|
+| admin | all | create/rename/delete | read/write | all | all | manage |
+| user | create/edit own | create/rename | read | own shortcuts | own keys | — |
+| view | read only | read | read | — | own keys | — |
 
 New users default to `view`. Admin can upgrade to `user`.
 

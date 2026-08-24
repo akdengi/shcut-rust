@@ -33,9 +33,20 @@ pub async fn get_settings(
 
 pub async fn update_settings(
     State(state): State<AppState>,
-    _auth: AuthClaims,
+    auth: AuthClaims,
     Json(input): Json<UpdateSettings>,
 ) -> Result<Json<Value>, StatusCode> {
+    // Check role - only admin can update settings
+    let user_id: i64 = auth.0.sub.parse().map_err(|_| StatusCode::UNAUTHORIZED)?;
+    let role = sqlx::query_scalar::<_, String>("SELECT role FROM users WHERE id = ?")
+        .bind(user_id)
+        .fetch_one(&state.db)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    if role != "admin" {
+        return Err(StatusCode::FORBIDDEN);
+    }
+
     if let Some(name) = &input.company_name {
         sqlx::query(
             "INSERT INTO workspace_settings (key, value) VALUES ('company_name', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value"
@@ -61,9 +72,20 @@ pub async fn update_settings(
 
 pub async fn upload_logo(
     State(state): State<AppState>,
-    _auth: AuthClaims,
+    auth: AuthClaims,
     mut multipart: Multipart,
 ) -> Result<Json<Value>, StatusCode> {
+    // Check role - only admin can upload logo
+    let user_id: i64 = auth.0.sub.parse().map_err(|_| StatusCode::UNAUTHORIZED)?;
+    let role = sqlx::query_scalar::<_, String>("SELECT role FROM users WHERE id = ?")
+        .bind(user_id)
+        .fetch_one(&state.db)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    if role != "admin" {
+        return Err(StatusCode::FORBIDDEN);
+    }
+
     let upload_dir = PathBuf::from("/app/data/uploads");
     tokio::fs::create_dir_all(&upload_dir)
         .await

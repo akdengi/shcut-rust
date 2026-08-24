@@ -201,3 +201,46 @@ pub struct ViewsByDate {
     pub date: String,
     pub count: i64,
 }
+
+// ===== API Keys =====
+
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+pub struct ApiKey {
+    pub id: i64,
+    pub user_id: i64,
+    pub name: String,
+    pub key_hash: String,
+    pub key_prefix: String,
+    pub created_ts: i64,
+    pub last_used_ts: Option<i64>,
+    pub expires_at: Option<i64>,
+    pub is_active: i64,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreateApiKey {
+    pub name: String,
+    pub expires_in_days: Option<i64>,
+    pub user_id: Option<i64>, // admin can specify target user
+}
+
+#[derive(Debug, Serialize)]
+pub struct ApiKeyResponse {
+    pub id: i64,
+    pub name: String,
+    pub key: Option<String>,
+    pub key_prefix: String,
+    pub created_ts: i64,
+    pub expires_at: Option<i64>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct ApiKeyInfo {
+    pub id: i64,
+    pub name: String,
+    pub key_prefix: String,
+    pub created_ts: i64,
+    pub last_used_ts: Option<i64>,
+    pub expires_at: Option<i64>,
+    pub is_active: bool,
+}

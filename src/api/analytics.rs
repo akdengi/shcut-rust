@@ -7,6 +7,7 @@ use serde::Deserialize;
 use tracing::error;
 
 use super::AppState;
+use super::auth_extractor::AuthClaims;
 use crate::db::models::{Activity, ShortcutAnalytics, AnalyticsItem, ActivityEntry, ViewsByDate};
 
 #[derive(Debug, Deserialize)]
@@ -19,18 +20,36 @@ pub async fn shortcut_analytics(
     State(state): State<AppState>,
     Path(id): Path<i64>,
     Query(params): Query<AnalyticsQuery>,
+    auth: AuthClaims,
 ) -> Result<Json<ShortcutAnalytics>, StatusCode> {
-    // Get shortcut and check existence
-    let shortcut = sqlx::query_scalar::<_, i64>("SELECT view_count FROM shortcuts WHERE id = ?")
+    let user_id: i64 = auth.0.sub.parse().map_err(|_| StatusCode::UNAUTHORIZED)?;
+
+    // Check role - view role cannot access analytics
+    let role = sqlx::query_scalar::<_, String>("SELECT role FROM users WHERE id = ?")
+        .bind(user_id)
+        .fetch_one(&state.db)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    if role == "view" {
+        return Err(StatusCode::FORBIDDEN);
+    }
+
+    // Get shortcut and check existence + ownership
+    let shortcut = sqlx::query_as::<_, (i64, i64)>("SELECT view_count, creator_id FROM shortcuts WHERE id = ?")
         .bind(id)
         .fetch_optional(&state.db)
         .await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
-    let view_count = match shortcut {
+    let (view_count, creator_id) = match shortcut {
         Some(v) => v,
         None => return Err(StatusCode::NOT_FOUND),
     };
+
+    // Non-admin users can only see their own shortcuts' analytics
+    if role != "admin" && creator_id != user_id {
+        return Err(StatusCode::FORBIDDEN);
+    }
 
     // Build query with date range
     let mut query = "SELECT * FROM activities WHERE shortcut_id = ? AND type = 'shortcut.view'".to_string();

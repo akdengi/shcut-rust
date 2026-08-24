@@ -6,8 +6,9 @@ pub mod tags;
 pub mod analytics;
 pub mod auth_extractor;
 pub mod settings;
+pub mod api_keys;
 
-use axum::{Router, routing::{get, post, put}, Json};
+use axum::{Router, routing::{get, post, put, delete}, Json};
 use serde_json::{json, Value};
 use sqlx::SqlitePool;
 use std::collections::HashMap;
@@ -87,6 +88,9 @@ pub fn routes() -> Router<AppState> {
         .route("/api/v1/settings/logo", post(settings::upload_logo))
         // OG image upload
         .route("/api/v1/upload/og-image", post(shortcuts::upload_og_image))
+        // API Keys
+        .route("/api/v1/api-keys", get(api_keys::list_keys).post(api_keys::create_key))
+        .route("/api/v1/api-keys/{id}", delete(api_keys::revoke_key).put(api_keys::toggle_key))
         // Redirect (public)
         .route("/s/{name}", get(shortcuts::redirect));
 

@@ -54,9 +54,20 @@ pub async fn list(
 
 pub async fn create(
     State(state): State<AppState>,
-    _auth: AuthClaims,
+    auth: AuthClaims,
     Json(input): Json<CreateTag>,
 ) -> Result<Json<TagWithCount>, StatusCode> {
+    // Check role - only admin and user can create tags
+    let user_id: i64 = auth.0.sub.parse().map_err(|_| StatusCode::UNAUTHORIZED)?;
+    let role = sqlx::query_scalar::<_, String>("SELECT role FROM users WHERE id = ?")
+        .bind(user_id)
+        .fetch_one(&state.db)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    if role == "view" {
+        return Err(StatusCode::FORBIDDEN);
+    }
+
     let name = input.name.trim().to_lowercase();
     if name.is_empty() {
         return Err(StatusCode::BAD_REQUEST);
@@ -95,9 +106,20 @@ pub async fn create(
 pub async fn rename(
     State(state): State<AppState>,
     Path(id): Path<i64>,
-    _auth: AuthClaims,
+    auth: AuthClaims,
     Json(input): Json<UpdateTag>,
 ) -> Result<Json<TagWithCount>, StatusCode> {
+    // Check role - view role cannot rename tags
+    let user_id: i64 = auth.0.sub.parse().map_err(|_| StatusCode::UNAUTHORIZED)?;
+    let role = sqlx::query_scalar::<_, String>("SELECT role FROM users WHERE id = ?")
+        .bind(user_id)
+        .fetch_one(&state.db)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    if role == "view" {
+        return Err(StatusCode::FORBIDDEN);
+    }
+
     let new_name = input.name.trim().to_lowercase();
     if new_name.is_empty() {
         return Err(StatusCode::BAD_REQUEST);
@@ -147,8 +169,19 @@ pub async fn rename(
 pub async fn delete(
     State(state): State<AppState>,
     Path(id): Path<i64>,
-    _auth: AuthClaims,
+    auth: AuthClaims,
 ) -> Result<StatusCode, StatusCode> {
+    // Check role - only admin can delete tags
+    let user_id: i64 = auth.0.sub.parse().map_err(|_| StatusCode::UNAUTHORIZED)?;
+    let role = sqlx::query_scalar::<_, String>("SELECT role FROM users WHERE id = ?")
+        .bind(user_id)
+        .fetch_one(&state.db)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    if role != "admin" {
+        return Err(StatusCode::FORBIDDEN);
+    }
+
     // Check if tag exists
     let existing = sqlx::query_scalar::<_, i64>("SELECT id FROM tags WHERE id = ?")
         .bind(id)

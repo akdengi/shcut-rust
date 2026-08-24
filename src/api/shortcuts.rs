@@ -439,10 +439,21 @@ pub async fn delete(
 }
 
 pub async fn upload_og_image(
-    State(_state): State<AppState>,
-    _auth: AuthClaims,
+    State(state): State<AppState>,
+    auth: AuthClaims,
     mut multipart: axum::extract::Multipart,
 ) -> Result<Json<serde_json::Value>, StatusCode> {
+    // Check role - view role cannot upload images
+    let user_id: i64 = auth.0.sub.parse().map_err(|_| StatusCode::UNAUTHORIZED)?;
+    let role = sqlx::query_scalar::<_, String>("SELECT role FROM users WHERE id = ?")
+        .bind(user_id)
+        .fetch_one(&state.db)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    if role == "view" {
+        return Err(StatusCode::FORBIDDEN);
+    }
+
     let upload_dir = std::path::PathBuf::from("/app/data/uploads");
     tokio::fs::create_dir_all(&upload_dir)
         .await

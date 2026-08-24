@@ -6,12 +6,20 @@ use axum::{
 };
 use chrono::Utc;
 use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation, Algorithm};
+use sha2::{Sha256, Digest};
 
 use super::AppState;
 use crate::db::models::Claims;
 
 /// JWT token expiration in seconds (7 days)
 const TOKEN_EXPIRATION: usize = 7 * 24 * 60 * 60;
+
+/// Hash an API key using SHA-256
+fn hash_api_key(key: &str) -> String {
+    let mut hasher = Sha256::new();
+    hasher.update(key.as_bytes());
+    format!("{:x}", hasher.finalize())
+}
 
 /// Create a new JWT token for a user
 pub fn create_token(user_id: i64, email: &str, secret: &str) -> String {
@@ -66,10 +74,61 @@ pub async fn auth_middleware(
         _ => return Err(StatusCode::UNAUTHORIZED),
     };
 
-    // Decode and validate token
-    let claims = match decode_token(token, &state.config.jwt_secret) {
-        Ok(claims) => claims,
-        Err(_) => return Err(StatusCode::UNAUTHORIZED),
+    // Decode and validate token — API key (shcut_*) or JWT
+    let claims = if token.starts_with("shcut_") {
+        // API key authentication
+        let key_hash = hash_api_key(token);
+
+        let api_key = sqlx::query_as::<_, crate::db::models::ApiKey>(
+            "SELECT * FROM api_keys WHERE key_hash = ? AND is_active = 1"
+        )
+        .bind(&key_hash)
+        .fetch_optional(&state.db)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+        match api_key {
+            Some(key) => {
+                if let Some(expires_at) = key.expires_at {
+                    if Utc::now().timestamp() > expires_at {
+                        return Err(StatusCode::UNAUTHORIZED);
+                    }
+                }
+
+                let now = Utc::now().timestamp();
+                let _ = sqlx::query("UPDATE api_keys SET last_used_ts = ? WHERE id = ?")
+                    .bind(now)
+                    .bind(key.id)
+                    .execute(&state.db)
+                    .await;
+
+                let user = sqlx::query_as::<_, crate::db::models::User>(
+                    "SELECT * FROM users WHERE id = ?"
+                )
+                .bind(key.user_id)
+                .fetch_optional(&state.db)
+                .await
+                .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+                match user {
+                    Some(user) => Claims {
+                        sub: user.id.to_string(),
+                        name: user.email,
+                        exp: (Utc::now().timestamp() + 3600) as usize,
+                        iat: Utc::now().timestamp() as usize,
+                        iss: "shcut-apikey".to_string(),
+                    },
+                    None => return Err(StatusCode::UNAUTHORIZED),
+                }
+            }
+            None => return Err(StatusCode::UNAUTHORIZED),
+        }
+    } else {
+        // JWT authentication
+        match decode_token(token, &state.config.jwt_secret) {
+            Ok(claims) => claims,
+            Err(_) => return Err(StatusCode::UNAUTHORIZED),
+        }
     };
 
     // Store user info in request extensions
